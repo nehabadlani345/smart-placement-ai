@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smart-placement-ai
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/spa_db
+    username: spa_user
+    password: spa123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+
+
+  data:
+    mongodb:
+      uri: mongodb+srv://spa_test:Test123@nb.ytxebrt.mongodb.net/spa_resume_db?authSource=admin&retryWrites=true&w=majority
