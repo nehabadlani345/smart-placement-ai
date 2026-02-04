@@ -20,6 +20,8 @@ public class StructuredResumeDocument {
 
     private LocalDateTime structuredAt;
 
+    private int totalExperienceYears;
+
     public StructuredResumeDocument() {}
 
     // =====================
@@ -75,6 +77,14 @@ public class StructuredResumeDocument {
 
 public void setConfidence(Map<String, Double> confidence) {
     this.confidence = confidence;
+}
+
+public int getTotalExperienceYears() {
+    return totalExperienceYears;
+}
+
+public void setTotalExperienceYears(int totalExperienceYears) {
+    this.totalExperienceYears = totalExperienceYears;
 }
 
 
