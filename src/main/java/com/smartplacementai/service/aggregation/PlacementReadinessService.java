@@ -10,8 +10,16 @@ import com.smartplacementai.model.aggregation.PlacementReadinessResult;
 import com.smartplacementai.model.mongo.ResumeJobMatchDocument;
 import com.smartplacementai.repository.mongo.ResumeJobMatchRepository;
 
+/**
+ * Aggregates all placement evidence into a single readiness result.
+ * This service does NOT calculate ATS or Resume Quality.
+ */
 @Service
 public class PlacementReadinessService {
+
+    private static final double RESUME_QUALITY_WEIGHT = 0.30;
+    private static final double ATS_WEIGHT = 0.50;
+    private static final double EXPERIENCE_WEIGHT = 0.20;
 
     private final ResumeJobMatchRepository matchRepository;
 
@@ -19,74 +27,93 @@ public class PlacementReadinessService {
         this.matchRepository = matchRepository;
     }
 
-    public PlacementReadinessResult calculateReadiness(String resumeId) {
+    /**
+     * Core aggregation method.
+     */
+    public PlacementReadinessResult calculateReadiness(
+            String resumeId,
+            double resumeQualityScore,
+            double experienceConfidenceScore
+    ) {
 
         List<ResumeJobMatchDocument> matches =
                 matchRepository.findByResumeId(resumeId);
 
+        double averageAtsScore = calculateAverageAtsScore(matches);
+
+        double overallScore =
+                (resumeQualityScore * RESUME_QUALITY_WEIGHT)
+                        + (averageAtsScore * ATS_WEIGHT)
+                        + (experienceConfidenceScore * EXPERIENCE_WEIGHT);
+
+        PlacementReadinessResult result = new PlacementReadinessResult();
+        result.setResumeId(resumeId);
+
+        result.setResumeQualityScore(round(resumeQualityScore));
+        result.setAverageAtsScore(round(averageAtsScore));
+        result.setExperienceConfidenceScore(round(experienceConfidenceScore));
+        result.setOverallScore(round(overallScore));
+
+        result.setReadinessLevel(classifyReadiness(overallScore));
+        result.setTotalJobsAnalyzed(matches.size());
+
+        result.setWeakestSkills(extractWeakestSkills(matches));
+        result.setStrongestSkills(extractStrongestSkills(matches));
+
+        return result;
+    }
+
+    // ---------- INTERNAL HELPERS ----------
+
+    private double calculateAverageAtsScore(List<ResumeJobMatchDocument> matches) {
         if (matches.isEmpty()) {
-            throw new RuntimeException("No job matches found for resume");
+            return 0.0;
         }
 
-        // ---------------------------
-        // 1️⃣ READINESS SCORE (AVG ATS)
-        // ---------------------------
-        double avgAts =
-                matches.stream()
-                        .mapToInt(ResumeJobMatchDocument::getAtsScore)
-                        .average()
-                        .orElse(0.0);
+        return matches.stream()
+                .mapToInt(ResumeJobMatchDocument::getAtsScore)
+                .average()
+                .orElse(0.0);
+    }
 
-        // ---------------------------
-        // 2️⃣ WEAK SKILLS FREQUENCY
-        // ---------------------------
-        Map<String, Integer> weakSkillCount = new HashMap<>();
+    private List<String> extractWeakestSkills(List<ResumeJobMatchDocument> matches) {
+        Map<String, Integer> count = new HashMap<>();
 
         for (ResumeJobMatchDocument match : matches) {
             for (String skill : match.getMissingRequiredSkills()) {
-                weakSkillCount.put(
-                        skill,
-                        weakSkillCount.getOrDefault(skill, 0) + 1
-                );
+                count.put(skill, count.getOrDefault(skill, 0) + 1);
             }
         }
 
-        List<String> weakestSkills =
-                weakSkillCount.entrySet().stream()
-                        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                        .map(Map.Entry::getKey)
-                        .toList();
+        return count.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .toList();
+    }
 
-        // ---------------------------
-        // 3️⃣ STRONG SKILLS FREQUENCY
-        // ---------------------------
-        Map<String, Integer> strongSkillCount = new HashMap<>();
+    private List<String> extractStrongestSkills(List<ResumeJobMatchDocument> matches) {
+        Map<String, Integer> count = new HashMap<>();
 
         for (ResumeJobMatchDocument match : matches) {
             for (String skill : match.getMatchedRequiredSkills()) {
-                strongSkillCount.put(
-                        skill,
-                        strongSkillCount.getOrDefault(skill, 0) + 1
-                );
+                count.put(skill, count.getOrDefault(skill, 0) + 1);
             }
         }
 
-        List<String> strongestSkills =
-                strongSkillCount.entrySet().stream()
-                        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                        .map(Map.Entry::getKey)
-                        .toList();
+        return count.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .toList();
+    }
 
-        // ---------------------------
-        // 4️⃣ BUILD RESULT
-        // ---------------------------
-        PlacementReadinessResult result = new PlacementReadinessResult();
-        result.setResumeId(resumeId);
-        result.setReadinessScore(avgAts);
-        result.setWeakestSkills(weakestSkills);
-        result.setStrongestSkills(strongestSkills);
-        result.setTotalJobsAnalyzed(matches.size());
+    private String classifyReadiness(double score) {
+        if (score >= 80) return "HIGH";
+        if (score >= 60) return "MEDIUM";
+        if (score >= 40) return "LOW";
+        return "NOT_READY";
+    }
 
-        return result;
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }
