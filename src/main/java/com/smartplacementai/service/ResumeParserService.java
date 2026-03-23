@@ -31,48 +31,41 @@ public class ResumeParserService {
 
     public StructuredResumeDocument parseAndStructure(String resumeId) {
 
+        // 🔹 1. Fetch raw resume
         ResumeDocument rawResume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new RuntimeException("Resume not found"));
 
+        // 🔹 2. Extract sections
         Map<String, List<String>> sections =
                 extractSections(rawResume.getRawText());
-        
-        // normalize skills
-if (sections.containsKey("skills")) {
-    sections.put(
-            "skills",
-            normalizeSkills(sections.get("skills"))
-    );
-}
 
-// normalize education
-if (sections.containsKey("education")) {
-    sections.put(
-            "education",
-            normalizeGenericSection(sections.get("education"))
-    );
-}
+        // 🔥 3. FALLBACK SKILL EXTRACTION (CRITICAL FIX)
+        if (!sections.containsKey("skills")) {
+            sections.put("skills", extractSkillsFromText(rawResume.getRawText()));
+        }
 
-// normalize experience
-if (sections.containsKey("experience")) {
-    sections.put(
-            "experience",
-            normalizeGenericSection(sections.get("experience"))
-    );
-}
+        // 🔹 4. Normalize sections
+        if (sections.containsKey("skills")) {
+            sections.put("skills", normalizeSkills(sections.get("skills")));
+        }
 
-// normalize projects
-if (sections.containsKey("projects")) {
-    sections.put(
-            "projects",
-            normalizeGenericSection(sections.get("projects"))
-    );
-}
+        if (sections.containsKey("education")) {
+            sections.put("education", normalizeGenericSection(sections.get("education")));
+        }
 
-          Map<String, Double> confidenceScores =
-            calculateConfidenceScores(sections);
+        if (sections.containsKey("experience")) {
+            sections.put("experience", normalizeGenericSection(sections.get("experience")));
+        }
 
+        if (sections.containsKey("projects")) {
+            sections.put("projects", normalizeGenericSection(sections.get("projects")));
+        }
 
+        // 🔹 5. Confidence scoring
+        Map<String, Double> confidenceScores =
+                calculateConfidenceScores(sections);
+
+        // 🔹 6. Build structured document
         StructuredResumeDocument structured = new StructuredResumeDocument();
         structured.setRawResumeId(resumeId);
         structured.setUserId(rawResume.getUserId());
@@ -83,7 +76,9 @@ if (sections.containsKey("projects")) {
         return structuredResumeRepository.save(structured);
     }
 
-
+    // =========================================================
+    // SECTION EXTRACTION
+    // =========================================================
 
     private Map<String, List<String>> extractSections(String rawText) {
 
@@ -94,134 +89,163 @@ if (sections.containsKey("projects")) {
 
         for (String line : lines) {
 
-             String cleaned = normalizeLine(line);
-            if (cleaned.isEmpty()) {
-                continue;
-            }
+            String cleaned = normalizeLine(line);
+            if (cleaned.isEmpty()) continue;
 
             ResumeSection detected = detectSection(cleaned.toLowerCase());
+
             if (detected != null) {
                 currentSection = detected;
-                result.putIfAbsent(
-                        currentSection.name().toLowerCase(),
-                        new ArrayList<>()
-                );
+                result.putIfAbsent(currentSection.name().toLowerCase(), new ArrayList<>());
                 continue;
             }
 
             if (currentSection != null) {
-                result.get(currentSection.name().toLowerCase())
-                        .add(cleaned);
+                result.get(currentSection.name().toLowerCase()).add(cleaned);
             }
         }
-        System.out.println("Detected section: " + currentSection);
+
         return result;
     }
 
-      private String normalizeLine(String line) {
+    // =========================================================
+    // NORMALIZATION
+    // =========================================================
 
-          String cleaned = line
-                  .replaceAll("[•▪▫*-]", "")
-                  .trim();
+    private String normalizeLine(String line) {
 
-          // ignore separator lines
-          if (cleaned.matches("^[=_-]{3,}$")) {
-              return "";
-          }
+        String cleaned = line
+                .replaceAll("[•▪▫*-]", "")
+                .trim();
 
-          return cleaned;
-      }
+        if (cleaned.matches("^[=_-]{3,}$")) {
+            return "";
+        }
 
-      private List<String> normalizeSkills(List<String> rawSkillsLines) {
+        return cleaned;
+    }
 
-          Set<String> normalized = new LinkedHashSet<>();
+    private List<String> normalizeSkills(List<String> rawSkillsLines) {
 
-          for (String line : rawSkillsLines) {
+        Set<String> normalized = new LinkedHashSet<>();
 
-              String[] tokens = line.split("[,/|]");
+        for (String line : rawSkillsLines) {
 
-              for (String token : tokens) {
-                  String skill = token.trim().toLowerCase();
+            String[] tokens = line.split("[,/|]");
 
-                  if (!skill.isEmpty()) {
-                      normalized.add(skill);
-                  }
-              }
-          }
-          return new ArrayList<>(normalized);
-      }
+            for (String token : tokens) {
+                String skill = token.trim().toLowerCase();
+                if (!skill.isEmpty()) {
+                    normalized.add(skill);
+                }
+            }
+        }
+
+        return new ArrayList<>(normalized);
+    }
 
     private List<String> normalizeGenericSection(List<String> rawLines) {
 
-      Set<String> normalized = new LinkedHashSet<>();
+        Set<String> normalized = new LinkedHashSet<>();
 
-      for (String line : rawLines) {
+        for (String line : rawLines) {
 
-          String cleaned = line
-                  .replaceAll("[•▪▫*-]", "")
-                  .trim();
+            String cleaned = line
+                    .replaceAll("[•▪▫*-]", "")
+                    .trim();
 
-          // ignore very small / noisy lines
-          if (cleaned.length() < 3) {
-              continue;
-          }
+            if (cleaned.length() < 3) continue;
 
-          normalized.add(cleaned);
-      }
-      return new ArrayList<>(normalized);
-    }
-
-
-    private Map<String, Double> calculateConfidenceScores(
-        Map<String, List<String>> sections) {
-
-    Map<String, Double> confidence = new HashMap<>();
-
-    for (Map.Entry<String, List<String>> entry : sections.entrySet()) {
-
-        String section = entry.getKey();
-        int size = entry.getValue().size();
-
-        double score = 0.0;
-
-        switch (section) {
-
-            case "skills":
-                score = size >= 5 ? 1.0 : size >= 3 ? 0.7 : 0.4;
-                break;
-
-            case "education":
-                score = size >= 1 ? 0.7 : 0.0;
-                break;
-
-            case "experience":
-                score = size >= 2 ? 1.0 : size == 1 ? 0.6 : 0.0;
-                break;
-
-            case "projects":
-                score = size >= 1 ? 0.7 : 0.0;
-                break;
-
-            default:
-                score = 0.3;
+            normalized.add(cleaned);
         }
 
-        confidence.put(section, score);
+        return new ArrayList<>(normalized);
     }
-    return confidence;
-}
 
+    // =========================================================
+    // 🔥 NEW: FALLBACK SKILL EXTRACTION
+    // =========================================================
 
+    private List<String> extractSkillsFromText(String text) {
 
-    private ResumeSection detectSection(String line) {
-        for (ResumeSection section : ResumeSection.values()) {
-            for (String header : section.getHeaders()) {
-                if (line.startsWith(header)) {
-                  return section;
-              }
+        List<String> knownSkills = List.of(
+                "java", "spring", "spring boot", "sql", "mysql",
+                "docker", "aws", "html", "css", "javascript"
+        );
 
+        Set<String> found = new LinkedHashSet<>();
+
+        String lower = text.toLowerCase();
+
+        for (String skill : knownSkills) {
+            if (lower.contains(skill)) {
+                found.add(skill);
             }
         }
+
+        return new ArrayList<>(found);
+    }
+
+    // =========================================================
+    // CONFIDENCE SCORING
+    // =========================================================
+
+    private Map<String, Double> calculateConfidenceScores(
+            Map<String, List<String>> sections) {
+
+        Map<String, Double> confidence = new HashMap<>();
+
+        for (Map.Entry<String, List<String>> entry : sections.entrySet()) {
+
+            String section = entry.getKey();
+            int size = entry.getValue().size();
+
+            double score;
+
+            switch (section) {
+
+                case "skills":
+                    score = size >= 5 ? 1.0 : size >= 3 ? 0.7 : 0.4;
+                    break;
+
+                case "education":
+                    score = size >= 1 ? 0.7 : 0.0;
+                    break;
+
+                case "experience":
+                    score = size >= 2 ? 1.0 : size == 1 ? 0.6 : 0.0;
+                    break;
+
+                case "projects":
+                    score = size >= 1 ? 0.7 : 0.0;
+                    break;
+
+                default:
+                    score = 0.3;
+            }
+
+            confidence.put(section, score);
+        }
+
+        return confidence;
+    }
+
+    // =========================================================
+    // 🔥 FIXED SECTION DETECTION
+    // =========================================================
+
+    private ResumeSection detectSection(String line) {
+
+        for (ResumeSection section : ResumeSection.values()) {
+            for (String header : section.getHeaders()) {
+
+                // 🔥 FIX: contains instead of startsWith
+                if (line.contains(header)) {
+                    return section;
+                }
+            }
+        }
+
         return null;
     }
 }

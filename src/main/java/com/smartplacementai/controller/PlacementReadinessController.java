@@ -1,8 +1,6 @@
 package com.smartplacementai.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.smartplacementai.model.aggregation.PlacementReadinessReport;
 import com.smartplacementai.model.aggregation.PlacementReadinessResult;
@@ -14,54 +12,49 @@ import com.smartplacementai.service.aggregation.PlacementReadinessService;
 import com.smartplacementai.service.aggregation.ResumeQualityScoreService;
 
 @RestController
+@RequestMapping("/placement-readiness")
 public class PlacementReadinessController {
 
     private final PlacementReadinessService placementReadinessService;
-    private final ResumeQualityScoreService resumeQualityScoreService;
-    private final StructuredResumeRepository structuredResumeRepository;
+    private final ResumeQualityScoreService resumeQualityService;
     private final ExperienceConfidenceService experienceConfidenceService;
+    private final StructuredResumeRepository structuredRepo;
 
-    // =========================
-    // CONSTRUCTOR INJECTION
-    // =========================
     public PlacementReadinessController(
             PlacementReadinessService placementReadinessService,
-            ResumeQualityScoreService resumeQualityScoreService,
-            StructuredResumeRepository structuredResumeRepository,
-            ExperienceConfidenceService experienceConfidenceService
+            ResumeQualityScoreService resumeQualityService,
+            ExperienceConfidenceService experienceConfidenceService,
+            StructuredResumeRepository structuredRepo
     ) {
         this.placementReadinessService = placementReadinessService;
-        this.resumeQualityScoreService = resumeQualityScoreService;
-        this.structuredResumeRepository = structuredResumeRepository;
+        this.resumeQualityService = resumeQualityService;
         this.experienceConfidenceService = experienceConfidenceService;
+        this.structuredRepo = structuredRepo;
     }
 
-    // =========================
-    // MAIN API ENDPOINT
-    // =========================
-    @GetMapping("/placement-readiness/{resumeId}")
+    @GetMapping("/{resumeId}")
     public PlacementReadinessReport getReadiness(@PathVariable String resumeId) {
 
         // =========================
-        // 1️⃣ GET RESUME QUALITY
+        // 1. RESUME QUALITY
         // =========================
-        ResumeQualityScoreResult qualityResult =
-                resumeQualityScoreService.calculate(resumeId);
+        ResumeQualityScoreResult quality =
+                resumeQualityService.calculateScore(resumeId);
 
-        double resumeQualityScore = qualityResult.getTotalScore();
+        double resumeQualityScore = quality.getScore();
 
         // =========================
-        // 2️⃣ GET EXPERIENCE CONFIDENCE
+        // 2. EXPERIENCE CONFIDENCE
         // =========================
-       StructuredResumeDocument structuredResume =
-        structuredResumeRepository.findByRawResumeId(resumeId)
-        .orElseThrow(() -> new RuntimeException("Structured resume not found"));
+        StructuredResumeDocument structuredResume =
+                structuredRepo.findByRawResumeId(resumeId)
+                        .orElseThrow(() -> new RuntimeException("Structured resume not found"));
 
         double experienceConfidenceScore =
-                experienceConfidenceService.calculateExperienceConfidence(structuredResume);
+                experienceConfidenceService.calculateConfidence(structuredResume);
 
         // =========================
-        // 3️⃣ CORE AGGREGATION (SERVICE CALL)
+        // 3. CORE AGGREGATION
         // =========================
         PlacementReadinessResult internalResult =
                 placementReadinessService.calculateReadiness(
@@ -71,41 +64,32 @@ public class PlacementReadinessController {
                 );
 
         // =========================
-        // 4️⃣ BUILD FINAL API RESPONSE
+        // 4. BUILD REPORT
         // =========================
         PlacementReadinessReport report = new PlacementReadinessReport();
 
-        report.setResumeId(internalResult.getResumeId());
+        report.setResumeId(resumeId);
         report.setReadinessScore(internalResult.getOverallScore());
         report.setReadinessLevel(internalResult.getReadinessLevel());
+        report.setTotalJobsAnalyzed(internalResult.getTotalJobsAnalyzed());
         report.setWeakestSkills(internalResult.getWeakestSkills());
         report.setStrongestSkills(internalResult.getStrongestSkills());
-        report.setTotalJobsAnalyzed(internalResult.getTotalJobsAnalyzed());
 
-        // =========================
-        // 5️⃣ SCORE BREAKDOWN
-        // =========================
+        // Breakdown
         PlacementReadinessReport.ScoreBreakdown breakdown =
                 new PlacementReadinessReport.ScoreBreakdown();
 
         breakdown.setResumeQuality(internalResult.getResumeQualityScore());
         breakdown.setAtsMatch(internalResult.getAverageAtsScore());
-        breakdown.setExperienceConfidence(
-                internalResult.getExperienceConfidenceScore()
-        );
+        breakdown.setExperienceConfidence(internalResult.getExperienceConfidenceScore());
 
         report.setBreakdown(breakdown);
 
-        // =========================
-        // ⚠️ IMPORTANT:
-        // Insights, Improvements, Confidence
-        // SHOULD COME FROM SERVICE (NOT CONTROLLER)
-        // =========================
-
+        // Add extra fields
         report.setInsights(internalResult.getInsights());
         report.setImprovements(internalResult.getImprovements());
         report.setConfidenceLevel(internalResult.getConfidenceLevel());
-        System.out.println("ResumeId: " + resumeId);
+
         return report;
     }
 }
