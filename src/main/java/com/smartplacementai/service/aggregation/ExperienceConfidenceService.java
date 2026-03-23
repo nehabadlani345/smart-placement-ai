@@ -128,6 +128,6 @@ public class ExperienceConfidenceService {
     }
 
     public double calculateConfidence(StructuredResumeDocument structuredResume) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+    return calculateExperienceConfidence(structuredResume);
+}
 }

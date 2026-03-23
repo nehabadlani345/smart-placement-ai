@@ -11,4 +11,3 @@ public interface ResumeJobMatchRepository
 
     List<ResumeJobMatchDocument> findByResumeId(String resumeId);
 }
-

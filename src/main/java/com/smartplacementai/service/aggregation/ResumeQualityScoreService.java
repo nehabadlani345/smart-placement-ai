@@ -29,7 +29,7 @@ public class ResumeQualityScoreService {
     public ResumeQualityScoreResult calculate(String resumeId) {
 
      StructuredResumeDocument structured =
-        structuredResumeRepository.findByRawResumeId(resumeId)
+        structuredResumeRepository.findById(resumeId)
                 .orElseThrow(() -> new RuntimeException("Structured resume not found"));
 
         ResumeDocument raw =

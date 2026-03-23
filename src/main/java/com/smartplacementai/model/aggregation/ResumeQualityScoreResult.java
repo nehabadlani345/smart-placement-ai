@@ -68,8 +68,7 @@ public class ResumeQualityScoreResult {
     public void setExperiencePresentationScore(int experiencePresentationScore) {
         this.experiencePresentationScore = experiencePresentationScore;
     }
-
-    public double getScore() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+public double getScore() {
+    return totalScore;
+}
 }

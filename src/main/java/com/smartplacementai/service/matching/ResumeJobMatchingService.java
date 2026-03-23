@@ -47,9 +47,9 @@ public class ResumeJobMatchingService {
 
     public MatchingResult match(String resumeId, String jobId) {
    
-        StructuredResumeDocument resume =
-                resumeRepository.findById(resumeId)
-                        .orElseThrow(() -> new ResumeNotFoundException(resumeId));
+       StructuredResumeDocument resume =
+    resumeRepository.findById(resumeId)
+        .orElseThrow(() -> new ResumeNotFoundException(resumeId));
 
         JobDescriptionDocument job =
                 jobRepository.findById(jobId)
@@ -201,6 +201,8 @@ public class ResumeJobMatchingService {
 
         matchRepository.save(matchDocument);
 
+
+System.out.println("Searching resume with rawResumeId: " + resumeId);
 
         return result;
 

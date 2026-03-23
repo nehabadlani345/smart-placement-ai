@@ -1,6 +1,9 @@
 package com.smartplacementai.controller;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.smartplacementai.model.aggregation.PlacementReadinessReport;
 import com.smartplacementai.model.aggregation.PlacementReadinessResult;
@@ -47,7 +50,7 @@ public class PlacementReadinessController {
         // 2. EXPERIENCE CONFIDENCE
         // =========================
         StructuredResumeDocument structuredResume =
-                structuredRepo.findByRawResumeId(resumeId)
+                structuredRepo.findById(resumeId)
                         .orElseThrow(() -> new RuntimeException("Structured resume not found"));
 
         double experienceConfidenceScore =

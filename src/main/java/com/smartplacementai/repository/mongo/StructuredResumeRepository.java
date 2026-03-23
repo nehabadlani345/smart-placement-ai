@@ -8,5 +8,5 @@ import com.smartplacementai.model.mongo.StructuredResumeDocument;
 
 public interface StructuredResumeRepository
         extends MongoRepository<StructuredResumeDocument, String> {
-                Optional<StructuredResumeDocument> findByRawResumeId(String rawResumeId);
+                Optional<StructuredResumeDocument> findById(String Id);
 }
