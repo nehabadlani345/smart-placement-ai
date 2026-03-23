@@ -25,6 +25,11 @@ public class PlacementReadinessResult {
 
     private int totalJobsAnalyzed;
 
+    // ---------- 🔥 NEW INTELLIGENCE LAYER ----------
+    private List<String> insights;
+    private List<ImprovementSuggestion> improvements;
+    private String confidenceLevel;
+
     // ---------- GETTERS & SETTERS ----------
 
     public String getResumeId() {
@@ -97,5 +102,31 @@ public class PlacementReadinessResult {
 
     public void setTotalJobsAnalyzed(int totalJobsAnalyzed) {
         this.totalJobsAnalyzed = totalJobsAnalyzed;
+    }
+
+    // ---------- NEW GETTERS & SETTERS ----------
+
+    public List<String> getInsights() {
+        return insights;
+    }
+
+    public void setInsights(List<String> insights) {
+        this.insights = insights;
+    }
+
+    public List<ImprovementSuggestion> getImprovements() {
+        return improvements;
+    }
+
+    public void setImprovements(List<ImprovementSuggestion> improvements) {
+        this.improvements = improvements;
+    }
+
+    public String getConfidenceLevel() {
+        return confidenceLevel;
+    }
+
+    public void setConfidenceLevel(String confidenceLevel) {
+        this.confidenceLevel = confidenceLevel;
     }
 }

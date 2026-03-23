@@ -1,11 +1,13 @@
 package com.smartplacementai.service.aggregation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.smartplacementai.model.aggregation.ImprovementSuggestion;
 import com.smartplacementai.model.aggregation.PlacementReadinessResult;
 import com.smartplacementai.model.mongo.ResumeJobMatchDocument;
 import com.smartplacementai.repository.mongo.ResumeJobMatchRepository;
@@ -116,4 +118,63 @@ public class PlacementReadinessService {
     private double round(double value) {
         return Math.round(value * 100.0) / 100.0;
     }
+
+    private List<String> generateInsights(PlacementReadinessResult result) {
+
+    List<String> insights = new ArrayList<>();
+
+    if (result.getResumeQualityScore() < 60) {
+        insights.add("Your resume quality is below average and may fail ATS filters");
+    }
+
+    if (result.getAverageAtsScore() < 65) {
+        insights.add("Your profile is not well aligned with job requirements");
+    }
+
+    if (result.getExperienceConfidenceScore() < 50) {
+        insights.add("Your experience does not strongly support your target roles");
+    }
+
+    if (insights.isEmpty()) {
+        insights.add("Your profile is well balanced and competitive");
+    }
+
+    return insights;
+}
+
+private List<ImprovementSuggestion> generateImprovements(
+        PlacementReadinessResult result) {
+
+    List<ImprovementSuggestion> list = new ArrayList<>();
+
+    if (result.getResumeQualityScore() < 70) {
+        ImprovementSuggestion s = new ImprovementSuggestion();
+        s.setAction("Improve resume formatting and keyword optimization");
+        s.setImpact("+5 to +10 score");
+        list.add(s);
+    }
+
+    if (result.getAverageAtsScore() < 70) {
+        ImprovementSuggestion s = new ImprovementSuggestion();
+        s.setAction("Align skills with job descriptions");
+        s.setImpact("+8 score");
+        list.add(s);
+    }
+
+    if (result.getExperienceConfidenceScore() < 60) {
+        ImprovementSuggestion s = new ImprovementSuggestion();
+        s.setAction("Add more relevant project or internship experience");
+        s.setImpact("+6 score");
+        list.add(s);
+    }
+
+    return list;
+}
+
+private String calculateConfidence(int jobsAnalyzed) {
+
+    if (jobsAnalyzed >= 5) return "HIGH";
+    if (jobsAnalyzed >= 3) return "MEDIUM";
+    return "LOW";
+}
 }

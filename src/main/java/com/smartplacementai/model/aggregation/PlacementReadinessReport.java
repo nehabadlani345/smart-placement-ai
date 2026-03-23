@@ -110,4 +110,32 @@ public class PlacementReadinessReport {
             this.experienceConfidence = experienceConfidence;
         }
     }
+
+    private List<String> insights;
+private List<ImprovementSuggestion> improvements;
+private String confidenceLevel;
+
+public List<String> getInsights() {
+    return insights;
+}
+
+public void setInsights(List<String> insights) {
+    this.insights = insights;
+}
+
+public List<ImprovementSuggestion> getImprovements() {
+    return improvements;
+}
+
+public void setImprovements(List<ImprovementSuggestion> improvements) {
+    this.improvements = improvements;
+}
+
+public String getConfidenceLevel() {
+    return confidenceLevel;
+}
+
+public void setConfidenceLevel(String confidenceLevel) {
+    this.confidenceLevel = confidenceLevel;
+}
 }
