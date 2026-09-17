@@ -1,0 +1,43 @@
+import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../auth.service';
+
+@Component({
+  selector: 'app-signup',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  templateUrl: './signup.html',
+  styleUrl: './signup.css',
+})
+export class Signup {
+  name = '';
+  email = '';
+  password = '';
+  loading = signal(false);
+  error = signal<string | null>(null);
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+  ) {}
+
+  onSubmit(): void {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.authService
+      .register({ name: this.name, email: this.email, password: this.password })
+      .subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.error.set(err.error?.message ?? 'Registration failed');
+        },
+      });
+  }
+}

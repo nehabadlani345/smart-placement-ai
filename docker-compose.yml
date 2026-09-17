@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    container_name: spa_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: spa_db
+      POSTGRES_USER: spa_user
+      POSTGRES_PASSWORD: spa_local_dev_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - spa_pgdata:/var/lib/postgresql/data
+
+volumes:
+  spa_pgdata:
