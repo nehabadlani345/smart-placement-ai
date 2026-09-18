@@ -13,5 +13,15 @@ services:
     volumes:
       - spa_pgdata:/var/lib/postgresql/data
 
+  mongo:
+    image: mongo:7
+    container_name: spa_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - spa_mongodata:/data/db
+
 volumes:
   spa_pgdata:
+  spa_mongodata:

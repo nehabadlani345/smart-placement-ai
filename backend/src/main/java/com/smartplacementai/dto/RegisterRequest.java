@@ -1,4 +1,4 @@
-package com.smartplacementai.auth.dto;
+package com.smartplacementai.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

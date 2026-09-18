@@ -12,9 +12,26 @@ export const routes: Routes = [
     loadComponent: () => import('./core/auth/signup/signup').then((m) => m.Signup),
   },
   {
-    path: 'dashboard',
+    path: '',
     canActivate: [authGuard],
-    loadComponent: () => import('./core/auth/login/login').then((m) => m.Login),
-    // placeholder until Phase 5's real dashboard
+    loadComponent: () => import('./core/layout/app-layout').then((m) => m.AppLayout),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'resumes',
+        loadComponent: () => import('./features/resume/resume-center').then((m) => m.ResumeCenter),
+      },
+      {
+        path: 'ats',
+        loadComponent: () => import('./features/ats/ats-analyzer').then((m) => m.AtsAnalyzer),
+      },
+      {
+        path: 'jd-match',
+        loadComponent: () => import('./features/jd/jd-match').then((m) => m.JdMatch),
+      },
+    ],
   },
 ];

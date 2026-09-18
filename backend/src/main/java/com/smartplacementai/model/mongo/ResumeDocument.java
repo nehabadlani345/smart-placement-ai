@@ -19,7 +19,10 @@ public class ResumeDocument {
     private String originalFileName;
 
     private String rawText; // extracted resume text
-
+    private String storageKey;
+    private Long fileSizeBytes;
+    private Integer version;
+    private boolean active = true;
     private List<String> skills;
 
     private Map<String, Object> sections;
@@ -78,4 +81,17 @@ public class ResumeDocument {
     public void setUploadedAt(LocalDateTime uploadedAt) {
         this.uploadedAt = uploadedAt;
     }
+    
+    
+    public String getStorageKey() { return storageKey; }
+    public void setStorageKey(String storageKey) { this.storageKey = storageKey; }
+
+    public Long getFileSizeBytes() { return fileSizeBytes; }
+    public void setFileSizeBytes(Long fileSizeBytes) { this.fileSizeBytes = fileSizeBytes; }
+
+    public Integer getVersion() { return version; }
+    public void setVersion(Integer version) { this.version = version; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 }

@@ -1,0 +1,60 @@
+<div class="min-h-screen flex bg-gray-50">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <div class="px-6 py-5 border-b border-gray-100">
+      <h1 class="text-lg font-bold text-gray-900">AI Placement OS</h1>
+      @if (authService.currentUser(); as user) {
+        <p class="text-xs text-gray-500 mt-0.5">{{ user.name }}</p>
+      }
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="bg-indigo-50 text-indigo-700"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+        Dashboard
+      </a>
+      <a
+        routerLink="/resumes"
+        routerLinkActive="bg-indigo-50 text-indigo-700"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+        Resume Center
+      </a>
+      <a
+        routerLink="/ats"
+        routerLinkActive="bg-indigo-50 text-indigo-700"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+        ATS Analyzer
+      </a>
+      <a
+        routerLink="/jd-match"
+        routerLinkActive="bg-indigo-50 text-indigo-700"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+        JD Compatibility
+      </a>
+    </nav>
+
+    <div class="px-3 py-4 border-t border-gray-100">
+      <button
+        (click)="logout()"
+        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition"
+      >
+        Log out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Page content -->
+  <main class="flex-1 overflow-y-auto">
+    <router-outlet></router-outlet>
+  </main>
+</div>

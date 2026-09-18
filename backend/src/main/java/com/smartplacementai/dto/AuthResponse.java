@@ -1,4 +1,4 @@
-package com.smartplacementai.auth.dto;
+package com.smartplacementai.dto;
 
 public class AuthResponse {
 

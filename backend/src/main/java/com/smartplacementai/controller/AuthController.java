@@ -1,8 +1,9 @@
-package com.smartplacementai.auth;
+package com.smartplacementai.controller;
 
-import com.smartplacementai.auth.dto.AuthResponse;
-import com.smartplacementai.auth.dto.LoginRequest;
-import com.smartplacementai.auth.dto.RegisterRequest;
+import com.smartplacementai.dto.AuthResponse;
+import com.smartplacementai.dto.LoginRequest;
+import com.smartplacementai.dto.RegisterRequest;
+import com.smartplacementai.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,7 +29,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    // Quick sanity endpoint to prove the JWT filter works end-to-end.
     @GetMapping("/me")
     public ResponseEntity<String> me(Authentication authentication) {
         return ResponseEntity.ok("Authenticated as: " + authentication.getName());

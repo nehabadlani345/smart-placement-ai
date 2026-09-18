@@ -1,8 +1,8 @@
-package com.smartplacementai.auth;
+package com.smartplacementai.service;
 
-import com.smartplacementai.auth.dto.AuthResponse;
-import com.smartplacementai.auth.dto.LoginRequest;
-import com.smartplacementai.auth.dto.RegisterRequest;
+import com.smartplacementai.dto.AuthResponse;
+import com.smartplacementai.dto.LoginRequest;
+import com.smartplacementai.dto.RegisterRequest;
 import com.smartplacementai.exception.EmailAlreadyExistsException;
 import com.smartplacementai.exception.InvalidCredentialsException;
 import com.smartplacementai.model.sql.Role;
