@@ -69,6 +69,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleAccessDenied(RuntimeException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
+    
+    @ExceptionHandler(RoadmapNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleRoadmapNotFound(RoadmapNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(AiGenerationException.class)
+    public ResponseEntity<Map<String, Object>> handleAiGeneration(AiGenerationException ex) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+    
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
