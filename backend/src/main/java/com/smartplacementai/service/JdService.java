@@ -9,6 +9,7 @@ import com.smartplacementai.model.matching.MatchingResult;
 import com.smartplacementai.model.mongo.JobDescriptionDocument;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.model.mongo.StructuredResumeDocument;
+import com.smartplacementai.repository.mongo.JdReportRepository;
 import com.smartplacementai.repository.mongo.JobDescriptionRepository;
 import com.smartplacementai.repository.mongo.ResumeRepository;
 import com.smartplacementai.service.matching.ResumeJobMatchingService;
@@ -17,6 +18,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class JdService {
@@ -27,19 +31,22 @@ public class JdService {
     private final ResumeJobMatchingService matchingService;
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
-
+    private final JdReportRepository jdReportRepository;
+    private static final Logger log = LoggerFactory.getLogger(AtsService.class);
+    
     public JdService(ResumeRepository resumeRepository,
                       ResumeParserService resumeParserService,
                       JobDescriptionRepository jobDescriptionRepository,
                       ResumeJobMatchingService matchingService,
                       AiClient aiClient,
-                      ObjectMapper objectMapper) {
+                      ObjectMapper objectMapper, JdReportRepository jdReportRepository) {
         this.resumeRepository = resumeRepository;
         this.resumeParserService = resumeParserService;
         this.jobDescriptionRepository = jobDescriptionRepository;
         this.matchingService = matchingService;
         this.aiClient = aiClient;
         this.objectMapper = objectMapper;
+		this.jdReportRepository = jdReportRepository;
     }
 
     public JdCompatibilityDto analyze(Long userId, JdAnalyzeRequest request) {
@@ -70,6 +77,10 @@ public class JdService {
         dto.setScoreBreakdown(result.getScoreBreakdown());
 
         enrichWithAi(dto, request);
+        
+        jdReportRepository.save(new com.smartplacementai.model.mongo.JdReportDocument(
+                userId, request.getRole(), dto.getAtsScore(), dto.getMissingRequiredSkills()));
+        
         return dto;
     }
 
@@ -92,6 +103,7 @@ public class JdService {
             dto.setAiExplanation(node.has("explanation") ? node.get("explanation").asText() : "");
             dto.setAiRecommendedActions(toStringList(node.get("recommendedActions")));
         } catch (Exception e) {
+        	log.error("Gemini call failed: {}", e.getMessage(), e);
             dto.setAiExplanation("AI explanation is temporarily unavailable. The match scores above are still accurate.");
             dto.setAiRecommendedActions(List.of());
         }

@@ -32,6 +32,10 @@ export const routes: Routes = [
         path: 'jd-match',
         loadComponent: () => import('./features/jd/jd-match').then((m) => m.JdMatch),
       },
+      {
+        path: 'roadmap',
+        loadComponent: () => import('./features/roadmap/roadmap').then((m) => m.RoadmapPage),
+      },
     ],
   },
 ];

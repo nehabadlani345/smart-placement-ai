@@ -1,35 +1,161 @@
-<div class="max-w-4xl mx-auto py-10 px-8">
-  <h1 class="text-2xl font-semibold text-gray-900 mb-1">
-    Welcome back{{ authService.currentUser()?.name ? ', ' + authService.currentUser()!.name : '' }}
-  </h1>
-  <p class="text-gray-500 text-sm mb-8">Here's where to pick up your placement prep</p>
+<div class="max-w-5xl mx-auto py-10 px-8">
+  @if (loading()) {
+    <div class="flex items-center justify-center h-64">
+      <div
+        class="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"
+      ></div>
+    </div>
+  } @else if (data(); as d) {
+    <!-- Hero: gradient readiness score card -->
+    <div
+      class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 p-8 mb-8 shadow-lg shadow-indigo-200/50 opacity-0 animate-[fadeInUp_0.6s_ease-out_forwards]"
+    >
+      <!-- decorative blurred orbs -->
+      <div class="absolute -top-16 -right-16 w-56 h-56 bg-white/10 rounded-full blur-3xl"></div>
+      <div
+        class="absolute -bottom-20 -left-10 w-64 h-64 bg-fuchsia-400/20 rounded-full blur-3xl"
+      ></div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <a
-      routerLink="/resumes"
-      class="block bg-white border border-gray-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition"
-    >
-      <h3 class="font-medium text-gray-900 mb-1">Resume Center</h3>
-      <p class="text-sm text-gray-500">Upload and manage resume versions</p>
-    </a>
-    <a
-      routerLink="/ats"
-      class="block bg-white border border-gray-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition"
-    >
-      <h3 class="font-medium text-gray-900 mb-1">ATS Analyzer</h3>
-      <p class="text-sm text-gray-500">AI-scored resume quality report</p>
-    </a>
-    <a
-      routerLink="/jd-match"
-      class="block bg-white border border-gray-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition"
-    >
-      <h3 class="font-medium text-gray-900 mb-1">JD Compatibility</h3>
-      <p class="text-sm text-gray-500">Match your resume against a job description</p>
-    </a>
-  </div>
+      <div class="relative flex flex-col sm:flex-row items-center gap-8">
+        <!-- animated SVG ring -->
+        <svg
+          width="180"
+          height="180"
+          viewBox="0 0 180 180"
+          class="drop-shadow-[0_0_18px_rgba(255,255,255,0.25)]"
+        >
+          <circle
+            cx="90"
+            cy="90"
+            [attr.r]="ringRadius"
+            fill="none"
+            stroke="white"
+            stroke-opacity="0.2"
+            stroke-width="12"
+          />
+          <circle
+            cx="90"
+            cy="90"
+            [attr.r]="ringRadius"
+            fill="none"
+            stroke="white"
+            stroke-width="12"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="ringCircumference"
+            [style.stroke-dashoffset]="ringOffset()"
+            style="
+              transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+              transform: rotate(-90deg);
+              transform-origin: 50% 50%;
+            "
+          />
+          <text x="90" y="82" text-anchor="middle" fill="white" font-size="36" font-weight="700">
+            {{ animatedScore() }}
+          </text>
+          <text x="90" y="106" text-anchor="middle" fill="white" fill-opacity="0.85" font-size="13">
+            / 100
+          </text>
+        </svg>
 
-  <p class="text-xs text-gray-400 mt-8">
-    A full readiness score combining all of this arrives in a later phase — for now, use the cards
-    above.
-  </p>
+        <div class="text-center sm:text-left">
+          <p class="text-indigo-100 text-sm font-medium mb-1">Placement Readiness</p>
+          <h1 class="text-3xl font-bold text-white mb-2">{{ scoreLabel(d.readinessScore) }}</h1>
+          <p class="text-indigo-100 text-sm max-w-sm">
+            Welcome back{{
+              authService.currentUser()?.name ? ', ' + authService.currentUser()!.name : ''
+            }}
+            — here's how your prep is shaping up across resume, JD match, and roadmap progress.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metric cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <a
+        routerLink="/ats"
+        class="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.1s_forwards]"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm text-gray-500">ATS Score</p>
+          <span
+            class="w-2 h-2 rounded-full bg-indigo-500 group-hover:scale-125 transition-transform"
+          ></span>
+        </div>
+        <p class="text-3xl font-bold" [class]="metricColor(d.atsScore)">{{ d.atsScore ?? '—' }}</p>
+      </a>
+
+      <a
+        routerLink="/jd-match"
+        class="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.2s_forwards]"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm text-gray-500">JD Match</p>
+          <span
+            class="w-2 h-2 rounded-full bg-violet-500 group-hover:scale-125 transition-transform"
+          ></span>
+        </div>
+        <p class="text-3xl font-bold" [class]="metricColor(d.jdScore)">{{ d.jdScore ?? '—' }}</p>
+      </a>
+
+      <a
+        routerLink="/roadmap"
+        class="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.3s_forwards]"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm text-gray-500">Roadmap</p>
+          <span
+            class="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform"
+          ></span>
+        </div>
+        <p class="text-3xl font-bold" [class]="metricColor(d.roadmapCompletionPercent)">
+          {{ d.roadmapCompletionPercent !== null ? d.roadmapCompletionPercent + '%' : '—' }}
+        </p>
+      </a>
+    </div>
+
+    <!-- Top gaps -->
+    @if (d.topGaps.length > 0) {
+      <div
+        class="bg-white border border-gray-200 rounded-xl p-6 mb-8 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.35s_forwards]"
+      >
+        <h3 class="font-medium text-gray-900 mb-3">Top Skill Gaps</h3>
+        <div class="flex flex-wrap gap-2">
+          @for (gap of d.topGaps; track gap) {
+            <span class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-full font-medium">{{
+              gap
+            }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Next best actions -->
+    @if (d.nextActions.length > 0) {
+      <div class="opacity-0 animate-[fadeInUp_0.5s_ease-out_0.4s_forwards]">
+        <h3 class="font-medium text-gray-900 mb-3">Next Best Actions</h3>
+        <div class="space-y-3">
+          @for (action of d.nextActions; track action.title) {
+            <a
+              [routerLink]="action.route"
+              class="group flex items-center justify-between bg-white border border-gray-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-sm transition-all duration-200"
+            >
+              <div>
+                <p class="font-medium text-gray-900">{{ action.title }}</p>
+                <p class="text-sm text-gray-500">{{ action.description }}</p>
+              </div>
+              <span
+                class="text-indigo-600 group-hover:translate-x-1 transition-transform duration-200"
+                >→</span
+              >
+            </a>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="text-center py-10 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.4s_forwards]">
+        <p class="text-gray-400 text-sm">You're all caught up — nice work.</p>
+      </div>
+    }
+  }
 </div>

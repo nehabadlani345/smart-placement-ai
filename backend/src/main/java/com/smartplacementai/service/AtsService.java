@@ -7,6 +7,7 @@ import com.smartplacementai.exception.ResumeNotFoundException;
 import com.smartplacementai.model.aggregation.ResumeQualityScoreResult;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.model.mongo.StructuredResumeDocument;
+import com.smartplacementai.repository.mongo.AtsReportRepository;
 import com.smartplacementai.repository.mongo.ResumeRepository;
 import com.smartplacementai.service.aggregation.ResumeQualityScoreService;
 import org.springframework.stereotype.Service;
@@ -14,21 +15,25 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Service
 public class AtsService {
-
+ private final AtsReportRepository atsReportRepository;
     private final ResumeRepository resumeRepository;
     private final ResumeParserService resumeParserService;
     private final ResumeQualityScoreService resumeQualityScoreService;
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
-
+    private static final Logger log = LoggerFactory.getLogger(AtsService.class);
+   
     public AtsService(ResumeRepository resumeRepository,
                        ResumeParserService resumeParserService,
                        ResumeQualityScoreService resumeQualityScoreService,
                        AiClient aiClient,
-                       ObjectMapper objectMapper) {
-        this.resumeRepository = resumeRepository;
+                       ObjectMapper objectMapper, AtsReportRepository atsReportRepository) {
+        this.atsReportRepository = atsReportRepository;
+		this.resumeRepository = resumeRepository;
         this.resumeParserService = resumeParserService;
         this.resumeQualityScoreService = resumeQualityScoreService;
         this.aiClient = aiClient;
@@ -52,6 +57,8 @@ public class AtsService {
         report.setExperiencePresentationScore(deterministic.getExperiencePresentationScore());
 
         enrichWithAi(report, structured);
+        atsReportRepository.save(new com.smartplacementai.model.mongo.AtsReportDocument(userId, report.getTotalScore()));
+        
         return report;
     }
 
@@ -77,7 +84,8 @@ public class AtsService {
             report.setAiSummary(node.has("summary") ? node.get("summary").asText() : "");
         } catch (Exception e) {
             // AI is a best-effort layer on top of the deterministic score — never let it break the report.
-            report.setAiStrengths(List.of());
+        	log.error("Gemini call failed: {}", e.getMessage(), e);
+        	report.setAiStrengths(List.of());
             report.setAiImprovements(List.of());
             report.setAiSummary("AI suggestions are temporarily unavailable. The scores above are still accurate.");
         }

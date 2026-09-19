@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class RoadmapService {
 
@@ -27,6 +30,8 @@ public class RoadmapService {
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
 
+    private static final Logger log = LoggerFactory.getLogger(AtsService.class);
+    
     public RoadmapService(RoadmapRepository roadmapRepository,
                            ResumeRepository resumeRepository,
                            ResumeParserService resumeParserService,
@@ -137,6 +142,7 @@ public class RoadmapService {
         try {
             rawJson = aiClient.generateJson(systemPrompt, userPrompt);
         } catch (Exception e) {
+        	log.error("Gemini call failed: {}", e.getMessage(), e);
             throw new AiGenerationException("Could not generate a roadmap right now. Please try again shortly.");
         }
 
@@ -176,6 +182,7 @@ public class RoadmapService {
         } catch (AiGenerationException e) {
             throw e;
         } catch (Exception e) {
+        	log.error("Gemini call failed: {}", e.getMessage(), e);
             // Malformed JSON from the model — this is the schema-validation safety net the spec calls for.
             throw new AiGenerationException("The AI response couldn't be parsed into a roadmap. Please try again.");
         }
