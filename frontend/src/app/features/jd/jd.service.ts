@@ -10,4 +10,8 @@ export class JdApiService {
   analyze(request: JdAnalyzeRequest): Observable<JdCompatibility> {
     return this.http.post<JdCompatibility>('/api/v1/jd/analyze', request);
   }
+
+  getLatest(): Observable<JdCompatibility> {
+  return this.http.get<JdCompatibility>('/api/v1/jd/latest');
+}
 }

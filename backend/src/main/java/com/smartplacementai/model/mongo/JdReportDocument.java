@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Document(collection = "jd_reports")
 public class JdReportDocument {
@@ -11,29 +12,46 @@ public class JdReportDocument {
     @Id
     private String id;
     private Long userId;
+    private String jobId;
+    private String companyName;
     private String role;
     private int atsScore;
+    private List<String> matchedRequiredSkills;
     private List<String> missingRequiredSkills;
+    private List<String> matchedPreferredSkills;
+    private List<String> missingPreferredSkills;
+    private Map<String, Integer> scoreBreakdown;
+    private String aiExplanation;
+    private List<String> aiRecommendedActions;
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public JdReportDocument() {}
 
-    public JdReportDocument(Long userId, String role, int atsScore, List<String> missingRequiredSkills) {
-        this.userId = userId;
-        this.role = role;
-        this.atsScore = atsScore;
-        this.missingRequiredSkills = missingRequiredSkills;
-    }
-
     public String getId() { return id; }
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+    public String getJobId() { return jobId; }
+    public void setJobId(String jobId) { this.jobId = jobId; }
+    public String getCompanyName() { return companyName; }
+    public void setCompanyName(String companyName) { this.companyName = companyName; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public int getAtsScore() { return atsScore; }
     public void setAtsScore(int atsScore) { this.atsScore = atsScore; }
+    public List<String> getMatchedRequiredSkills() { return matchedRequiredSkills; }
+    public void setMatchedRequiredSkills(List<String> v) { this.matchedRequiredSkills = v; }
     public List<String> getMissingRequiredSkills() { return missingRequiredSkills; }
     public void setMissingRequiredSkills(List<String> v) { this.missingRequiredSkills = v; }
+    public List<String> getMatchedPreferredSkills() { return matchedPreferredSkills; }
+    public void setMatchedPreferredSkills(List<String> v) { this.matchedPreferredSkills = v; }
+    public List<String> getMissingPreferredSkills() { return missingPreferredSkills; }
+    public void setMissingPreferredSkills(List<String> v) { this.missingPreferredSkills = v; }
+    public Map<String, Integer> getScoreBreakdown() { return scoreBreakdown; }
+    public void setScoreBreakdown(Map<String, Integer> scoreBreakdown) { this.scoreBreakdown = scoreBreakdown; }
+    public String getAiExplanation() { return aiExplanation; }
+    public void setAiExplanation(String aiExplanation) { this.aiExplanation = aiExplanation; }
+    public List<String> getAiRecommendedActions() { return aiRecommendedActions; }
+    public void setAiRecommendedActions(List<String> v) { this.aiRecommendedActions = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

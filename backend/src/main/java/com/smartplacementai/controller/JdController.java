@@ -25,4 +25,10 @@ public class JdController {
         Long userId = ((SecurityUser) authentication.getPrincipal()).getUserId();
         return ResponseEntity.ok(jdService.analyze(userId, request));
     }
+    
+    @GetMapping("/latest")
+    public ResponseEntity<JdCompatibilityDto> latest(Authentication authentication) {
+        Long userId = ((SecurityUser) authentication.getPrincipal()).getUserId();
+        return ResponseEntity.ok(jdService.getLatest(userId));
+    }
 }

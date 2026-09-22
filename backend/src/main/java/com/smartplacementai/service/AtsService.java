@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartplacementai.dto.AtsReportDto;
 import com.smartplacementai.exception.ResumeNotFoundException;
 import com.smartplacementai.model.aggregation.ResumeQualityScoreResult;
+import com.smartplacementai.model.mongo.AtsReportDocument;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.model.mongo.StructuredResumeDocument;
 import com.smartplacementai.repository.mongo.AtsReportRepository;
@@ -57,11 +58,43 @@ public class AtsService {
         report.setExperiencePresentationScore(deterministic.getExperiencePresentationScore());
 
         enrichWithAi(report, structured);
-        atsReportRepository.save(new com.smartplacementai.model.mongo.AtsReportDocument(userId, report.getTotalScore()));
-        
+        // at the end of analyzeActiveResume(), right before "return report;":
+        AtsReportDocument snapshot = new AtsReportDocument();
+        snapshot.setUserId(userId);
+        snapshot.setResumeId(report.getResumeId());
+        snapshot.setTotalScore(report.getTotalScore());
+        snapshot.setFormatScore(report.getFormatScore());
+        snapshot.setSectionScore(report.getSectionScore());
+        snapshot.setKeywordScore(report.getKeywordScore());
+        snapshot.setSkillClarityScore(report.getSkillClarityScore());
+        snapshot.setExperiencePresentationScore(report.getExperiencePresentationScore());
+        snapshot.setAiStrengths(report.getAiStrengths());
+        snapshot.setAiImprovements(report.getAiImprovements());
+        snapshot.setAiSummary(report.getAiSummary());
+        atsReportRepository.save(snapshot);
         return report;
     }
 
+    public AtsReportDto getLatestReport(Long userId) {
+        AtsReportDocument doc = atsReportRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .orElseThrow(() -> new com.smartplacementai.exception.AtsReportNotFoundException(
+                        "No ATS report yet. Run an analysis first."));
+
+        AtsReportDto dto = new AtsReportDto();
+        dto.setResumeId(doc.getResumeId());
+        dto.setTotalScore(doc.getTotalScore());
+        dto.setFormatScore(doc.getFormatScore());
+        dto.setSectionScore(doc.getSectionScore());
+        dto.setKeywordScore(doc.getKeywordScore());
+        dto.setSkillClarityScore(doc.getSkillClarityScore());
+        dto.setExperiencePresentationScore(doc.getExperiencePresentationScore());
+        dto.setAiStrengths(doc.getAiStrengths());
+        dto.setAiImprovements(doc.getAiImprovements());
+        dto.setAiSummary(doc.getAiSummary());
+        return dto;
+    }
+    
+    
     private void enrichWithAi(AtsReportDto report, StructuredResumeDocument structured) {
         String systemPrompt = "You are an expert technical resume reviewer for software engineering placements. " +
                 "Given structured resume sections and deterministic ATS sub-scores (0-100 each), return JSON with " +

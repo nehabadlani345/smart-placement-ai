@@ -2,100 +2,107 @@
   <h1 class="text-2xl font-semibold text-gray-900 mb-1">ATS Analyzer</h1>
   <p class="text-gray-500 text-sm mb-8">AI-powered review of your current resume</p>
 
-  @if (!report()) {
-    <div class="bg-white border border-gray-200 rounded-xl p-8 text-center">
-      <p class="text-gray-600 mb-4">Run a fresh analysis on your currently active resume.</p>
+  @if (initializing()) {
+    <div class="flex justify-center py-16">
+      <div
+        class="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"
+      ></div>
+    </div>
+  } @else if (!report()) {
+    <div
+      class="relative overflow-hidden bg-white border border-gray-200 rounded-2xl p-10 text-center opacity-0 animate-[fadeInUp_0.5s_ease-out_forwards]"
+    >
+      <div
+        class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-100 rounded-full blur-3xl opacity-60"
+      ></div>
+      <p class="relative text-gray-600 mb-5">
+        Run a fresh analysis on your currently active resume.
+      </p>
       <button
         (click)="runAnalysis()"
         [disabled]="loading()"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-lg transition disabled:opacity-50"
+        class="relative bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 disabled:opacity-50"
       >
         {{ loading() ? 'Analyzing…' : 'Analyze my resume' }}
       </button>
       @if (error()) {
-        <p class="text-red-600 text-sm mt-4">{{ error() }}</p>
+        <p class="relative text-red-600 text-sm mt-4">{{ error() }}</p>
       }
     </div>
   } @else {
     <div class="space-y-6">
-      <!-- Overall score -->
-      <div class="bg-white border border-gray-200 rounded-xl p-6 flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-500">Overall ATS Score</p>
-          <p class="text-4xl font-bold" [class]="scoreColor(report()!.totalScore)">
-            {{ report()!.totalScore }}
-          </p>
+      <!-- Overall score: gradient hero, same language as the dashboard -->
+      <div
+        class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 p-6 flex items-center justify-between opacity-0 animate-[fadeInUp_0.5s_ease-out_forwards] shadow-lg shadow-indigo-200/50"
+      >
+        <div class="absolute -bottom-16 -right-8 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+        <div class="relative">
+          <p class="text-sm text-indigo-100">Overall ATS Score</p>
+          <p class="text-5xl font-bold text-white">{{ report()!.totalScore }}</p>
         </div>
         <button
           (click)="runAnalysis()"
           [disabled]="loading()"
-          class="text-sm text-indigo-600 font-medium hover:underline disabled:opacity-50"
+          class="relative text-sm text-white bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg font-medium transition disabled:opacity-50"
         >
           {{ loading() ? 'Re-analyzing…' : 'Re-run analysis' }}
         </button>
       </div>
 
       <!-- Category breakdown -->
-      <div class="bg-white border border-gray-200 rounded-xl p-6">
+      <div
+        class="bg-white border border-gray-200 rounded-xl p-6 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.1s_forwards]"
+      >
         <h3 class="font-medium text-gray-900 mb-4">Score Breakdown</h3>
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
-          <div>
-            <p class="text-lg font-semibold" [class]="scoreColor(report()!.formatScore)">
-              {{ report()!.formatScore }}
-            </p>
-            <p class="text-xs text-gray-500">Format</p>
-          </div>
-          <div>
-            <p class="text-lg font-semibold" [class]="scoreColor(report()!.sectionScore)">
-              {{ report()!.sectionScore }}
-            </p>
-            <p class="text-xs text-gray-500">Sections</p>
-          </div>
-          <div>
-            <p class="text-lg font-semibold" [class]="scoreColor(report()!.keywordScore)">
-              {{ report()!.keywordScore }}
-            </p>
-            <p class="text-xs text-gray-500">Keywords</p>
-          </div>
-          <div>
-            <p class="text-lg font-semibold" [class]="scoreColor(report()!.skillClarityScore)">
-              {{ report()!.skillClarityScore }}
-            </p>
-            <p class="text-xs text-gray-500">Skill Clarity</p>
-          </div>
-          <div>
-            <p
-              class="text-lg font-semibold"
-              [class]="scoreColor(report()!.experiencePresentationScore)"
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+          @for (
+            item of [
+              { label: 'Format', value: report()!.formatScore },
+              { label: 'Sections', value: report()!.sectionScore },
+              { label: 'Keywords', value: report()!.keywordScore },
+              { label: 'Skill Clarity', value: report()!.skillClarityScore },
+              { label: 'Experience', value: report()!.experiencePresentationScore },
+            ];
+            track item.label
+          ) {
+            <div
+              class="rounded-lg p-3 transition-transform hover:scale-105"
+              [class]="scoreBg(item.value)"
             >
-              {{ report()!.experiencePresentationScore }}
-            </p>
-            <p class="text-xs text-gray-500">Experience</p>
-          </div>
+              <p class="text-lg font-semibold" [class]="scoreColor(item.value)">{{ item.value }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{{ item.label }}</p>
+            </div>
+          }
         </div>
       </div>
 
-      <!-- AI summary -->
       @if (report()!.aiSummary) {
-        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+        <div
+          class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.2s_forwards]"
+        >
           <p class="text-sm text-indigo-900">{{ report()!.aiSummary }}</p>
         </div>
       }
 
-      <!-- Strengths / Improvements -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.3s_forwards]"
+      >
         <div class="bg-white border border-gray-200 rounded-xl p-5">
-          <h3 class="font-medium text-gray-900 mb-3">Strengths</h3>
+          <h3 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Strengths
+          </h3>
           <ul class="space-y-2">
             @for (s of report()!.aiStrengths; track s) {
               <li class="text-sm text-gray-600 flex gap-2">
-                <span class="text-green-600">✓</span> {{ s }}
+                <span class="text-emerald-600">✓</span> {{ s }}
               </li>
             }
           </ul>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl p-5">
-          <h3 class="font-medium text-gray-900 mb-3">Suggested Improvements</h3>
+          <h3 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Suggested Improvements
+          </h3>
           <ul class="space-y-2">
             @for (i of report()!.aiImprovements; track i) {
               <li class="text-sm text-gray-600 flex gap-2">

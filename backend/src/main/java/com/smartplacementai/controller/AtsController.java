@@ -24,4 +24,11 @@ public class AtsController {
         Long userId = ((SecurityUser) authentication.getPrincipal()).getUserId();
         return ResponseEntity.ok(atsService.analyzeActiveResume(userId));
     }
+    
+    @GetMapping("/latest")
+    public ResponseEntity<AtsReportDto> latest(Authentication authentication) {
+        Long userId = ((SecurityUser) authentication.getPrincipal()).getUserId();
+        return ResponseEntity.ok(atsService.getLatestReport(userId));
+    }
+    
 }

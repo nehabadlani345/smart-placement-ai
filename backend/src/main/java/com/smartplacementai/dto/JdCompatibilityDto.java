@@ -13,7 +13,11 @@ public class JdCompatibilityDto {
     private Map<String, Integer> scoreBreakdown;
     private String aiExplanation;
     private List<String> aiRecommendedActions;
-
+    private String companyName;
+    private String role;
+    
+    
+    
     public String getJobId() { return jobId; }
     public void setJobId(String jobId) { this.jobId = jobId; }
     public int getAtsScore() { return atsScore; }
@@ -31,5 +35,13 @@ public class JdCompatibilityDto {
     public String getAiExplanation() { return aiExplanation; }
     public void setAiExplanation(String aiExplanation) { this.aiExplanation = aiExplanation; }
     public List<String> getAiRecommendedActions() { return aiRecommendedActions; }
-    public void setAiRecommendedActions(List<String> v) { this.aiRecommendedActions = v; }
+   public void setAiRecommendedActions(List<String> v) { this.aiRecommendedActions = v; }
+
+   public String getCompanyName() { return companyName; }
+   public void setCompanyName(String companyName) { this.companyName = companyName; }
+   public String getRole() { return role; }
+   public void setRole(String role) { this.role = role; }
+
+
+
 }

@@ -10,4 +10,8 @@ export class AtsApiService {
   analyze(): Observable<AtsReport> {
     return this.http.get<AtsReport>('/api/v1/ats/analyze');
   }
+
+  getLatest(): Observable<AtsReport> {
+  return this.http.get<AtsReport>('/api/v1/ats/latest');
+}
 }

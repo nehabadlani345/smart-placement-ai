@@ -6,6 +6,7 @@ import com.smartplacementai.dto.JdAnalyzeRequest;
 import com.smartplacementai.dto.JdCompatibilityDto;
 import com.smartplacementai.exception.ResumeNotFoundException;
 import com.smartplacementai.model.matching.MatchingResult;
+import com.smartplacementai.model.mongo.JdReportDocument;
 import com.smartplacementai.model.mongo.JobDescriptionDocument;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.model.mongo.StructuredResumeDocument;
@@ -75,15 +76,45 @@ public class JdService {
         dto.setMatchedPreferredSkills(result.getMatchedPreferredSkills());
         dto.setMissingPreferredSkills(result.getMissingPreferredSkills());
         dto.setScoreBreakdown(result.getScoreBreakdown());
-
+        dto.setCompanyName(request.getCompanyName());
+        dto.setRole(request.getRole());
+        
         enrichWithAi(dto, request);
-        
-        jdReportRepository.save(new com.smartplacementai.model.mongo.JdReportDocument(
-                userId, request.getRole(), dto.getAtsScore(), dto.getMissingRequiredSkills()));
-        
+        JdReportDocument snapshot = new JdReportDocument();
+        snapshot.setUserId(userId);
+        snapshot.setJobId(dto.getJobId());
+        snapshot.setCompanyName(dto.getCompanyName());
+        snapshot.setRole(dto.getRole());
+        snapshot.setAtsScore(dto.getAtsScore());
+        snapshot.setMatchedRequiredSkills(dto.getMatchedRequiredSkills());
+        snapshot.setMissingRequiredSkills(dto.getMissingRequiredSkills());
+        snapshot.setMatchedPreferredSkills(dto.getMatchedPreferredSkills());
+        snapshot.setMissingPreferredSkills(dto.getMissingPreferredSkills());
+        snapshot.setScoreBreakdown(dto.getScoreBreakdown());
+        snapshot.setAiExplanation(dto.getAiExplanation());
+        snapshot.setAiRecommendedActions(dto.getAiRecommendedActions());
+        jdReportRepository.save(snapshot);
         return dto;
     }
+    public JdCompatibilityDto getLatest(Long userId) {
+        JdReportDocument doc = jdReportRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .orElseThrow(() -> new com.smartplacementai.exception.JdReportNotFoundException(
+                        "No JD compatibility check yet."));
 
+        JdCompatibilityDto dto = new JdCompatibilityDto();
+        dto.setJobId(doc.getJobId());
+        dto.setCompanyName(doc.getCompanyName());
+        dto.setRole(doc.getRole());
+        dto.setAtsScore(doc.getAtsScore());
+        dto.setMatchedRequiredSkills(doc.getMatchedRequiredSkills());
+        dto.setMissingRequiredSkills(doc.getMissingRequiredSkills());
+        dto.setMatchedPreferredSkills(doc.getMatchedPreferredSkills());
+        dto.setMissingPreferredSkills(doc.getMissingPreferredSkills());
+        dto.setScoreBreakdown(doc.getScoreBreakdown());
+        dto.setAiExplanation(doc.getAiExplanation());
+        dto.setAiRecommendedActions(doc.getAiRecommendedActions());
+        return dto;
+    }
     private void enrichWithAi(JdCompatibilityDto dto, JdAnalyzeRequest request) {
         String systemPrompt = "You are a career coach explaining a resume-vs-job-description match. " +
                 "IMPORTANT: a 'missing' skill means it wasn't found as text in the resume — this does NOT necessarily " +

@@ -80,6 +80,16 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
     
+    @ExceptionHandler(AtsReportNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleAtsReportNotFound(AtsReportNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+    
+    @ExceptionHandler(JdReportNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleJdReportNotFound(JdReportNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+    
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());

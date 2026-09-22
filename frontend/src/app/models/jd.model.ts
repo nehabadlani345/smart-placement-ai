@@ -9,6 +9,8 @@ export interface JdAnalyzeRequest {
 
 export interface JdCompatibility {
   jobId: string;
+  companyName: string;
+  role: string;
   atsScore: number;
   matchedRequiredSkills: string[];
   missingRequiredSkills: string[];
