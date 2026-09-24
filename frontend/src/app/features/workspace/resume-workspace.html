@@ -1,0 +1,33 @@
+<div class="max-w-3xl mx-auto pt-8 px-8">
+  <!-- Segmented tab control -->
+  <div class="inline-flex bg-gray-100 rounded-xl p-1 mb-2">
+    <button (click)="setTab('resume')"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+            [class.bg-white]="activeTab() === 'resume'"
+            [class.shadow-sm]="activeTab() === 'resume'"
+            [class.text-blue-600]="activeTab() === 'resume'"
+            [class.text-gray-500]="activeTab() !== 'resume'">
+      Resume Center
+    </button>
+    <button (click)="setTab('ats')"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+            [class.bg-white]="activeTab() === 'ats'"
+            [class.shadow-sm]="activeTab() === 'ats'"
+            [class.text-indigo-600]="activeTab() === 'ats'"
+            [class.text-gray-500]="activeTab() !== 'ats'">
+      ATS Analyzer
+    </button>
+    <button (click)="setTab('jd')"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+            [class.bg-white]="activeTab() === 'jd'"
+            [class.shadow-sm]="activeTab() === 'jd'"
+            [class.text-violet-600]="activeTab() === 'jd'"
+            [class.text-gray-500]="activeTab() !== 'jd'">
+      JD Compatibility
+    </button>
+  </div>
+</div>
+
+<div [class.hidden]="activeTab() !== 'resume'"><app-resume-center /></div>
+<div [class.hidden]="activeTab() !== 'ats'"><app-ats-analyzer /></div>
+<div [class.hidden]="activeTab() !== 'jd'"><app-jd-match /></div>

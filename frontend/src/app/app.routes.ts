@@ -20,17 +20,22 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
       },
+      // {
+      //   path: 'resumes',
+      //   loadComponent: () => import('./features/resume/resume-center').then((m) => m.ResumeCenter),
+      // },
+      // {
+      //   path: 'ats',
+      //   loadComponent: () => import('./features/ats/ats-analyzer').then((m) => m.AtsAnalyzer),
+      // },
+      // {
+      //   path: 'jd-match',
+      //   loadComponent: () => import('./features/jd/jd-match').then((m) => m.JdMatch),
+      // },
       {
         path: 'resumes',
-        loadComponent: () => import('./features/resume/resume-center').then((m) => m.ResumeCenter),
-      },
-      {
-        path: 'ats',
-        loadComponent: () => import('./features/ats/ats-analyzer').then((m) => m.AtsAnalyzer),
-      },
-      {
-        path: 'jd-match',
-        loadComponent: () => import('./features/jd/jd-match').then((m) => m.JdMatch),
+        loadComponent: () =>
+          import('./features/workspace/resume-workspace').then((m) => m.ResumeWorkspace),
       },
       {
         path: 'roadmap',

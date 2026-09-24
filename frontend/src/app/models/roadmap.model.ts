@@ -9,19 +9,24 @@ export interface RoadmapTask {
 
 export interface RoadmapPhase {
   title: string;
-  weekNumber: number;
+  periodNumber: number;
+  periodLabel: string;
   tasks: RoadmapTask[];
 }
 
 export interface Roadmap {
   id: string;
   targetRole: string;
-  weeklyStudyHours: number;
+  durationValue: number;
+  durationUnit: 'DAY' | 'WEEK' | 'MONTH';
+  studyHoursPerPeriod: number;
   version: number;
   phases: RoadmapPhase[];
 }
 
 export interface RoadmapGenerateRequest {
   targetRole: string;
-  weeklyStudyHours: number;
+  durationValue: number;
+  durationUnit: 'DAY' | 'WEEK' | 'MONTH';
+  studyHoursPerPeriod: number;
 }

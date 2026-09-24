@@ -38,8 +38,8 @@ public class RoadmapController {
     }
 
     @GetMapping("/planner")
-    public ResponseEntity<RoadmapDto.PhaseDto> planner(@RequestParam int week, Authentication authentication) {
-        return ResponseEntity.ok(roadmapService.getPlannerForWeek(userId(authentication), week));
+    public ResponseEntity<RoadmapDto.PhaseDto> planner(@RequestParam int period, Authentication authentication) {
+        return ResponseEntity.ok(roadmapService.getPlannerForPeriod(userId(authentication), period));
     }
 
     private Long userId(Authentication authentication) {

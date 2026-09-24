@@ -1,81 +1,387 @@
 <div class="max-w-3xl mx-auto py-10 px-8">
-  <h1 class="text-2xl font-semibold text-gray-900 mb-1">Roadmap</h1>
-  <p class="text-gray-500 text-sm mb-8">Your personalized, week-by-week placement prep plan</p>
+
+  <!-- ===================================================== -->
+  <!-- PAGE HEADER -->
+  <!-- ===================================================== -->
+
+  <h1 class="text-2xl font-semibold text-gray-900 mb-1">
+    Roadmap
+  </h1>
+
+  <p class="text-gray-500 text-sm mb-8">
+    Your personalized prep plan, on your schedule
+  </p>
+
+
+  <!-- ===================================================== -->
+  <!-- LOADING -->
+  <!-- ===================================================== -->
 
   @if (loading()) {
-    <p class="text-gray-400 text-sm">Loading…</p>
-  } @else if (notFound() && !roadmap()) {
-    <div class="bg-white border border-gray-200 rounded-xl p-8">
-      <h3 class="font-medium text-gray-900 mb-4">Generate your first roadmap</h3>
-      <form (ngSubmit)="onGenerate()" class="space-y-4">
+
+    <div class="flex justify-center py-16">
+
+      <div
+        class="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"
+      ></div>
+
+    </div>
+
+  }
+
+
+  <!-- ===================================================== -->
+  <!-- GENERATE ROADMAP -->
+  <!-- ===================================================== -->
+
+  @else if (notFound() && !roadmap()) {
+
+    <div
+      class="relative overflow-hidden bg-white border border-gray-200 rounded-2xl p-8 opacity-0 animate-[fadeInUp_0.5s_ease-out_forwards]"
+    >
+
+      <!-- Decorative background -->
+      <div
+        class="absolute -top-12 -right-12 w-48 h-48 bg-emerald-100 rounded-full blur-3xl opacity-60"
+      ></div>
+
+
+      <h3
+        class="relative font-medium text-gray-900 mb-5"
+      >
+        Generate your roadmap
+      </h3>
+
+
+      <form
+        (ngSubmit)="onGenerate()"
+        class="relative space-y-5"
+      >
+
+        <!-- =============================================== -->
+        <!-- TARGET ROLE -->
+        <!-- =============================================== -->
+
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Target role</label>
+
+          <label
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Target role
+          </label>
+
           <input
             type="text"
             [(ngModel)]="targetRole"
             name="targetRole"
             placeholder="Backend Developer"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
             required
           />
+
         </div>
+
+
+        <!-- =============================================== -->
+        <!-- PLAN BY -->
+        <!-- =============================================== -->
+
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Weekly study hours</label>
-          <input
-            type="number"
-            [(ngModel)]="weeklyStudyHours"
-            name="weeklyStudyHours"
-            min="1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            required
-          />
+
+          <label
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Plan by
+          </label>
+
+          <div
+            class="inline-flex bg-gray-100 rounded-xl p-1"
+          >
+
+            @for (
+              unit of durationUnits;
+              track unit
+            ) {
+
+              <button
+                type="button"
+                (click)="setUnit(unit)"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class.bg-white]="durationUnit() === unit"
+                [class.shadow-sm]="durationUnit() === unit"
+                [class.text-emerald-600]="durationUnit() === unit"
+                [class.text-gray-500]="durationUnit() !== unit"
+              >
+
+                {{
+                  unit === 'DAY'
+                    ? 'Daily'
+                    : unit === 'WEEK'
+                      ? 'Weekly'
+                      : 'Monthly'
+                }}
+
+              </button>
+
+            }
+
+          </div>
+
         </div>
+
+
+        <!-- =============================================== -->
+        <!-- DURATION + STUDY HOURS -->
+        <!-- =============================================== -->
+
+        <div class="grid grid-cols-2 gap-4">
+
+          <!-- Duration -->
+          <div>
+
+            <label
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Number of {{ unitLabel() }}s
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="durationValue"
+              name="durationValue"
+              min="1"
+              [max]="
+                durationUnit() === 'DAY'
+                  ? 30
+                  : durationUnit() === 'MONTH'
+                    ? 6
+                    : 12
+              "
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+              required
+            />
+
+          </div>
+
+
+          <!-- Study hours -->
+          <div>
+
+            <label
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Study hours per {{ unitLabel() }}
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="studyHoursPerPeriod"
+              name="studyHoursPerPeriod"
+              min="1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+              required
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- =============================================== -->
+        <!-- ERROR -->
+        <!-- =============================================== -->
+
         @if (error()) {
-          <p class="text-red-600 text-sm">{{ error() }}</p>
+
+          <p class="text-red-600 text-sm">
+            {{ error() }}
+          </p>
+
         }
+
+
+        <!-- =============================================== -->
+        <!-- GENERATE BUTTON -->
+        <!-- =============================================== -->
+
         <button
           type="submit"
           [disabled]="generating()"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-lg transition disabled:opacity-50"
+          class="bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-200 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 disabled:opacity-50"
         >
-          {{ generating() ? 'Generating…' : 'Generate roadmap' }}
+
+          {{ generating()
+              ? 'Generating…'
+              : 'Generate roadmap'
+          }}
+
         </button>
+
       </form>
-    </div>
-  } @else if (roadmap(); as r) {
-    <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-      <div class="flex items-center justify-between mb-2">
-        <div>
-          <p class="font-medium text-gray-900">{{ r.targetRole }}</p>
-          <p class="text-xs text-gray-500">v{{ r.version }} · {{ r.weeklyStudyHours }} hrs/week</p>
-        </div>
-        <p class="text-2xl font-bold text-indigo-600">{{ progressPercent() }}%</p>
-      </div>
-      <div class="w-full bg-gray-100 rounded-full h-2">
-        <div
-          class="bg-indigo-600 h-2 rounded-full transition-all"
-          [style.width.%]="progressPercent()"
-        ></div>
-      </div>
+
     </div>
 
+  }
+
+
+  <!-- ===================================================== -->
+  <!-- ROADMAP RESULT -->
+  <!-- ===================================================== -->
+
+  @else if (roadmap(); as r) {
+
+    <!-- =================================================== -->
+    <!-- ROADMAP SUMMARY -->
+    <!-- =================================================== -->
+
+    <div
+      class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 p-6 mb-6 opacity-0 animate-[fadeInUp_0.5s_ease-out_forwards] shadow-lg shadow-emerald-200/50"
+    >
+
+      <!-- Decorative background -->
+      <div
+        class="absolute -bottom-16 -right-8 w-48 h-48 bg-white/10 rounded-full blur-3xl"
+      ></div>
+
+
+      <div
+        class="relative flex items-center justify-between mb-2"
+      >
+
+        <div>
+
+          <p class="font-medium text-white">
+            {{ r.targetRole }}
+          </p>
+
+          <p
+            class="text-xs text-emerald-100"
+          >
+
+            v{{ r.version }}
+
+            ·
+
+            {{ r.durationValue }}
+            {{ r.durationUnit === 'DAY'
+                ? 'day'
+                : r.durationUnit === 'MONTH'
+                  ? 'month'
+                  : 'week'
+            }}
+
+            {{ r.durationValue > 1 ? 's' : '' }}
+
+            ·
+
+            {{ r.studyHoursPerPeriod }}
+
+            hrs/
+
+            {{ r.durationUnit === 'DAY'
+                ? 'day'
+                : r.durationUnit === 'MONTH'
+                  ? 'month'
+                  : 'week'
+            }}
+
+          </p>
+
+        </div>
+
+
+        <p
+          class="text-2xl font-bold text-white"
+        >
+          {{ progressPercent() }}%
+        </p>
+
+      </div>
+
+
+      <!-- Progress bar -->
+
+      <div
+        class="relative w-full bg-white/20 rounded-full h-2"
+      >
+
+        <div
+          class="bg-white h-2 rounded-full transition-all duration-700"
+          [style.width.%]="progressPercent()"
+        ></div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- PHASES -->
+    <!-- =================================================== -->
+
     <div class="space-y-6">
-      @for (phase of r.phases; track phase.weekNumber) {
-        <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 class="font-medium text-gray-900 mb-4">
-            Week {{ phase.weekNumber }} — {{ phase.title }}
+
+      @for (
+        phase of r.phases;
+        track phase.periodNumber;
+        let i = $index
+      ) {
+
+        <div
+          class="bg-white border border-gray-200 rounded-xl p-6 opacity-0 animate-[fadeInUp_0.4s_ease-out_forwards]"
+          [style.animation-delay.s]="i * 0.05"
+        >
+
+          <!-- Phase title -->
+
+          <h3
+            class="font-medium text-gray-900 mb-4"
+          >
+
+            {{ phase.periodLabel }}
+
+            —
+
+            {{ phase.title }}
+
           </h3>
+
+
+          <!-- ================================================= -->
+          <!-- TASKS -->
+          <!-- ================================================= -->
+
           <div class="space-y-3">
-            @for (task of phase.tasks; track task.id) {
-              <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+
+            @for (
+              task of phase.tasks;
+              track task.id
+            ) {
+
+              <div
+                class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition"
+              >
+
+                <!-- Checkbox -->
+
                 <input
                   type="checkbox"
                   [checked]="task.completed"
                   (change)="toggleTask(task)"
-                  class="mt-1 w-4 h-4 accent-indigo-600 cursor-pointer"
+                  class="mt-1 w-4 h-4 accent-emerald-600 cursor-pointer"
                 />
+
+
+                <!-- Task content -->
+
                 <div class="flex-1">
-                  <div class="flex items-center gap-2">
+
+                  <!-- Task title + priority -->
+
+                  <div
+                    class="flex items-center gap-2"
+                  >
+
                     <p
                       class="text-sm font-medium"
                       [class.line-through]="task.completed"
@@ -84,21 +390,57 @@
                     >
                       {{ task.title }}
                     </p>
-                    <span
-                      class="text-xs px-2 py-0.5 rounded-full"
-                      [class]="priorityStyle(task.priority)"
-                    >
-                      {{ task.priority }}
-                    </span>
+
+
+                    @if (task.priority) {
+
+                      <span
+                        class="text-xs px-2 py-0.5 rounded-full"
+                        [class]="priorityStyle(task.priority)"
+                      >
+                        {{ task.priority }}
+                      </span>
+
+                    }
+
                   </div>
-                  <p class="text-xs text-gray-500 mt-0.5">{{ task.description }}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">{{ task.estimatedHours }}h estimated</p>
+
+
+                  <!-- Description -->
+
+                  @if (task.description) {
+
+                    <p
+                      class="text-xs text-gray-500 mt-0.5"
+                    >
+                      {{ task.description }}
+                    </p>
+
+                  }
+
+
+                  <!-- Estimated hours -->
+
+                  <p
+                    class="text-xs text-gray-400 mt-0.5"
+                  >
+                    {{ task.estimatedHours }}h estimated
+                  </p>
+
                 </div>
+
               </div>
+
             }
+
           </div>
+
         </div>
+
       }
+
     </div>
+
   }
+
 </div>

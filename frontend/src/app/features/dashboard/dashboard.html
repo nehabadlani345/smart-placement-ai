@@ -73,7 +73,8 @@
     <!-- Metric cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
       <a
-        routerLink="/ats"
+        routerLink="/resumes"
+        [queryParams]="{ tab: 'ats' }"
         class="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.1s_forwards]"
       >
         <div class="flex items-center justify-between mb-2">
@@ -86,7 +87,8 @@
       </a>
 
       <a
-        routerLink="/jd-match"
+        routerLink="/resumes"
+        [queryParams]="{ tab: 'jd-match' }"
         class="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 opacity-0 animate-[fadeInUp_0.5s_ease-out_0.2s_forwards]"
       >
         <div class="flex items-center justify-between mb-2">
