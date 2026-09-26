@@ -1,0 +1,51 @@
+<div class="max-w-4xl mx-auto py-10 px-8">
+  <h1 class="text-2xl font-semibold text-gray-900 mb-1">Learning Hub</h1>
+  <p class="text-gray-500 text-sm mb-6">Curated resources to fill your skill gaps</p>
+
+  <div class="flex flex-col sm:flex-row gap-3 mb-4">
+    <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="Search resources…"
+           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition" />
+    <button (click)="toggleBookmarkFilter()"
+            class="px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-200"
+            [class]="bookmarkedOnly() ? 'bg-cyan-600 text-white border-cyan-600' : 'bg-white text-gray-600 border-gray-300 hover:border-cyan-300'">
+      ★ Bookmarked
+    </button>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-6">
+    @for (topic of topics; track topic) {
+      <button (click)="setTopic(topic)"
+              class="text-xs px-3 py-1.5 rounded-full font-medium transition-all duration-200"
+              [class]="activeTopic() === topic ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-cyan-50'">
+        {{ topic }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center py-16">
+      <div class="w-6 h-6 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      @for (r of resources(); track r.id; let i = $index) {
+        <div class="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 opacity-0 animate-[fadeInUp_0.4s_ease-out_forwards]"
+             [style.animation-delay.s]="i * 0.04">
+          <div class="flex items-start justify-between mb-2">
+            <span class="text-xs bg-cyan-50 text-cyan-700 px-2 py-1 rounded-full font-medium">{{ r.topic }}</span>
+            <button (click)="toggleBookmark(r)" class="text-lg transition-transform hover:scale-125"
+                    [class.text-amber-400]="r.bookmarked" [class.text-gray-300]="!r.bookmarked">★</button>
+          </div>
+          <a [href]="r.url" target="_blank" rel="noopener"
+             class="font-medium text-gray-900 group-hover:text-cyan-700 transition-colors">
+            {{ typeIcon(r.resourceType) }} {{ r.title }}
+          </a>
+          <p class="text-sm text-gray-500 mt-1">{{ r.description }}</p>
+          <p class="text-xs text-gray-400 mt-2">{{ r.difficulty }}</p>
+        </div>
+      } @empty {
+        <p class="text-gray-400 text-sm col-span-2 text-center py-10">No resources match your filters.</p>
+      }
+    </div>
+  }
+</div>

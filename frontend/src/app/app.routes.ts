@@ -41,6 +41,10 @@ export const routes: Routes = [
         path: 'roadmap',
         loadComponent: () => import('./features/roadmap/roadmap').then((m) => m.RoadmapPage),
       },
+      {
+        path: 'resources',
+        loadComponent: () => import('./features/resources/resources').then((m) => m.Resources),
+      },
     ],
   },
 ];
