@@ -10,6 +10,8 @@ import com.smartplacementai.model.mongo.JdReportDocument;
 import com.smartplacementai.model.mongo.JobDescriptionDocument;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.model.mongo.StructuredResumeDocument;
+import com.smartplacementai.model.mongo.AiExecutionLogDocument;
+import com.smartplacementai.repository.mongo.AiExecutionLogRepository;
 import com.smartplacementai.repository.mongo.JdReportRepository;
 import com.smartplacementai.repository.mongo.JobDescriptionRepository;
 import com.smartplacementai.repository.mongo.ResumeRepository;
@@ -33,6 +35,7 @@ public class JdService {
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
     private final JdReportRepository jdReportRepository;
+    private final AiExecutionLogRepository aiExecutionLogRepository;
     private static final Logger log = LoggerFactory.getLogger(AtsService.class);
     
     public JdService(ResumeRepository resumeRepository,
@@ -40,7 +43,8 @@ public class JdService {
                       JobDescriptionRepository jobDescriptionRepository,
                       ResumeJobMatchingService matchingService,
                       AiClient aiClient,
-                      ObjectMapper objectMapper, JdReportRepository jdReportRepository) {
+                      ObjectMapper objectMapper, JdReportRepository jdReportRepository,
+                      AiExecutionLogRepository aiExecutionLogRepository) {
         this.resumeRepository = resumeRepository;
         this.resumeParserService = resumeParserService;
         this.jobDescriptionRepository = jobDescriptionRepository;
@@ -48,6 +52,7 @@ public class JdService {
         this.aiClient = aiClient;
         this.objectMapper = objectMapper;
 		this.jdReportRepository = jdReportRepository;
+        this.aiExecutionLogRepository = aiExecutionLogRepository;
     }
 
     public JdCompatibilityDto analyze(Long userId, JdAnalyzeRequest request) {
@@ -79,7 +84,7 @@ public class JdService {
         dto.setCompanyName(request.getCompanyName());
         dto.setRole(request.getRole());
         
-        enrichWithAi(dto, request);
+        enrichWithAi(dto, request, userId);
         JdReportDocument snapshot = new JdReportDocument();
         snapshot.setUserId(userId);
         snapshot.setJobId(dto.getJobId());
@@ -115,7 +120,7 @@ public class JdService {
         dto.setAiRecommendedActions(doc.getAiRecommendedActions());
         return dto;
     }
-    private void enrichWithAi(JdCompatibilityDto dto, JdAnalyzeRequest request) {
+    private void enrichWithAi(JdCompatibilityDto dto, JdAnalyzeRequest request, Long userId) {
         String systemPrompt = "You are a career coach explaining a resume-vs-job-description match. " +
                 "IMPORTANT: a 'missing' skill means it wasn't found as text in the resume — this does NOT necessarily " +
                 "mean the candidate lacks the skill, only that it isn't evidenced in writing. Reflect this nuance. " +
@@ -128,13 +133,18 @@ public class JdService {
                 "\nMatched preferred skills: " + dto.getMatchedPreferredSkills() +
                 "\nMissing preferred skills: " + dto.getMissingPreferredSkills();
 
+        long start = System.currentTimeMillis();
         try {
             String rawJson = aiClient.generateJson(systemPrompt, userPrompt);
             JsonNode node = objectMapper.readTree(rawJson);
             dto.setAiExplanation(node.has("explanation") ? node.get("explanation").asText() : "");
             dto.setAiRecommendedActions(toStringList(node.get("recommendedActions")));
+            aiExecutionLogRepository.save(new AiExecutionLogDocument(
+                    "jd", userId, System.currentTimeMillis() - start, true, null));
         } catch (Exception e) {
         	log.error("Gemini call failed: {}", e.getMessage(), e);
+            aiExecutionLogRepository.save(new AiExecutionLogDocument(
+                    "jd", userId, System.currentTimeMillis() - start, false, e.getMessage()));
             dto.setAiExplanation("AI explanation is temporarily unavailable. The match scores above are still accurate.");
             dto.setAiRecommendedActions(List.of());
         }

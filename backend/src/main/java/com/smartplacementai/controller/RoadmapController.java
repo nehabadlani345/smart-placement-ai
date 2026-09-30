@@ -2,7 +2,7 @@ package com.smartplacementai.controller;
 
 import com.smartplacementai.dto.RoadmapDto;
 import com.smartplacementai.dto.RoadmapGenerateRequest;
-import com.smartplacementai.security.SecurityUser;
+import com.smartplacementai.security.CurrentUser;
 import com.smartplacementai.service.RoadmapService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.*;
 public class RoadmapController {
 
     private final RoadmapService roadmapService;
+    private final CurrentUser currentUser;
 
-    public RoadmapController(RoadmapService roadmapService) {
+    public RoadmapController(RoadmapService roadmapService, CurrentUser currentUser) {
         this.roadmapService = roadmapService;
+        this.currentUser = currentUser;
     }
 
     @PostMapping("/generate")
@@ -43,6 +45,6 @@ public class RoadmapController {
     }
 
     private Long userId(Authentication authentication) {
-        return ((SecurityUser) authentication.getPrincipal()).getUserId();
+        return currentUser.id(authentication);
     }
 }

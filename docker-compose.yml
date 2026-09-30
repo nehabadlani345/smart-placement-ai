@@ -22,6 +22,14 @@ services:
     volumes:
       - spa_mongodata:/data/db
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: spa_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP — point your app's mail sender here in dev
+      - "8025:8025" # Web UI to view "sent" emails at localhost:8025
+
 volumes:
   spa_pgdata:
   spa_mongodata:

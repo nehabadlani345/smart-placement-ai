@@ -5,7 +5,7 @@ import com.smartplacementai.exception.InvalidResumeException;
 import com.smartplacementai.exception.ResumeNotFoundException;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.repository.mongo.ResumeRepository;
-import com.smartplacementai.security.SecurityUser;
+import com.smartplacementai.security.CurrentUser;
 import com.smartplacementai.service.FileValidationUtil;
 import com.smartplacementai.service.ResumeStorageService;
 import com.smartplacementai.service.ResumeTextExtractor;
@@ -26,21 +26,24 @@ public class ResumeController {
     private final ResumeTextExtractor resumeTextExtractor;
     private final ResumeStorageService storageService;
     private final FileValidationUtil fileValidationUtil;
+    private final CurrentUser currentUser;
 
     public ResumeController(ResumeRepository resumeRepository,
                              ResumeTextExtractor resumeTextExtractor,
                              ResumeStorageService storageService,
-                             FileValidationUtil fileValidationUtil) {
+                             FileValidationUtil fileValidationUtil,
+                             CurrentUser currentUser) {
         this.resumeRepository = resumeRepository;
         this.resumeTextExtractor = resumeTextExtractor;
         this.storageService = storageService;
         this.fileValidationUtil = fileValidationUtil;
+        this.currentUser = currentUser;
     }
 
     @PostMapping("/upload")
     public ResponseEntity<ResumeSummaryDto> upload(@RequestParam("file") MultipartFile file,
                                                      Authentication authentication) throws IOException {
-        Long userId = currentUserId(authentication);
+        Long userId = currentUser.id(authentication);
 
         try {
             fileValidationUtil.validate(file);
@@ -73,7 +76,7 @@ public class ResumeController {
 
     @GetMapping
     public ResponseEntity<List<ResumeSummaryDto>> list(Authentication authentication) {
-        Long userId = currentUserId(authentication);
+        Long userId = currentUser.id(authentication);
         List<ResumeSummaryDto> resumes = resumeRepository.findByUserIdOrderByVersionDesc(userId)
                 .stream().map(this::toDto).toList();
         return ResponseEntity.ok(resumes);
@@ -100,7 +103,7 @@ public class ResumeController {
     }
 
     private ResumeDocument getOwnedResume(String id, Authentication authentication) {
-        Long userId = currentUserId(authentication);
+        Long userId = currentUser.id(authentication);
         ResumeDocument resume = resumeRepository.findById(id)
                 .orElseThrow(() -> new ResumeNotFoundException("Resume not found"));
 
@@ -108,13 +111,6 @@ public class ResumeController {
             throw new ResumeNotFoundException("Resume not found");
         }
         return resume;
-    }
-
-    private Long currentUserId(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof SecurityUser securityUser)) {
-            throw new org.springframework.security.access.AccessDeniedException("Not authenticated");
-        }
-        return securityUser.getUserId();
     }
 
     private ResumeSummaryDto toDto(ResumeDocument r) {

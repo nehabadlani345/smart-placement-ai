@@ -10,6 +10,8 @@ import com.smartplacementai.exception.RoadmapNotFoundException;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.model.mongo.RoadmapDocument;
 import com.smartplacementai.model.mongo.StructuredResumeDocument;
+import com.smartplacementai.model.mongo.AiExecutionLogDocument;
+import com.smartplacementai.repository.mongo.AiExecutionLogRepository;
 import com.smartplacementai.repository.mongo.ResumeRepository;
 import com.smartplacementai.repository.mongo.RoadmapRepository;
 
@@ -29,6 +31,7 @@ public class RoadmapService {
     private final ResumeParserService resumeParserService;
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
+    private final AiExecutionLogRepository aiExecutionLogRepository;
 
     private static final Logger log =
             LoggerFactory.getLogger(RoadmapService.class);
@@ -38,13 +41,15 @@ public class RoadmapService {
             ResumeRepository resumeRepository,
             ResumeParserService resumeParserService,
             AiClient aiClient,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            AiExecutionLogRepository aiExecutionLogRepository) {
 
         this.roadmapRepository = roadmapRepository;
         this.resumeRepository = resumeRepository;
         this.resumeParserService = resumeParserService;
         this.aiClient = aiClient;
         this.objectMapper = objectMapper;
+        this.aiExecutionLogRepository = aiExecutionLogRepository;
     }
 
     // =========================================================
@@ -82,7 +87,8 @@ public class RoadmapService {
                 callAiForPhases(
                         structured,
                         request,
-                        clampedDuration
+                        clampedDuration,
+                        userId
                 );
 
         /*
@@ -358,7 +364,8 @@ public class RoadmapService {
     private List<RoadmapDocument.Phase> callAiForPhases(
             StructuredResumeDocument structured,
             RoadmapGenerateRequest request,
-            int duration) {
+            int duration,
+            Long userId) {
 
         String unit =
                 request.getDurationUnit().toUpperCase();
@@ -440,6 +447,7 @@ public class RoadmapService {
                         );
 
         String rawJson;
+        long start = System.currentTimeMillis();
 
         // =====================================================
         // CALL AI
@@ -453,6 +461,9 @@ public class RoadmapService {
                             userPrompt
                     );
 
+            aiExecutionLogRepository.save(new AiExecutionLogDocument(
+                    "roadmap", userId, System.currentTimeMillis() - start, true, null));
+
         } catch (Exception e) {
 
             log.error(
@@ -460,6 +471,9 @@ public class RoadmapService {
                     e.getMessage(),
                     e
             );
+
+            aiExecutionLogRepository.save(new AiExecutionLogDocument(
+                    "roadmap", userId, System.currentTimeMillis() - start, false, e.getMessage()));
 
             throw new AiGenerationException(
                     "Could not generate a roadmap right now. "

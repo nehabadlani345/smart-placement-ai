@@ -1,7 +1,7 @@
 package com.smartplacementai.controller;
 
 import com.smartplacementai.dto.AtsReportDto;
-import com.smartplacementai.security.SecurityUser;
+import com.smartplacementai.security.CurrentUser;
 import com.smartplacementai.service.AtsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,20 +14,22 @@ import org.springframework.web.bind.annotation.RestController;
 public class AtsController {
 
     private final AtsService atsService;
+    private final CurrentUser currentUser;
 
-    public AtsController(AtsService atsService) {
+    public AtsController(AtsService atsService, CurrentUser currentUser) {
         this.atsService = atsService;
+        this.currentUser = currentUser;
     }
 
     @GetMapping("/analyze")
     public ResponseEntity<AtsReportDto> analyze(Authentication authentication) {
-        Long userId = ((SecurityUser) authentication.getPrincipal()).getUserId();
+        Long userId = currentUser.id(authentication);
         return ResponseEntity.ok(atsService.analyzeActiveResume(userId));
     }
     
     @GetMapping("/latest")
     public ResponseEntity<AtsReportDto> latest(Authentication authentication) {
-        Long userId = ((SecurityUser) authentication.getPrincipal()).getUserId();
+        Long userId = currentUser.id(authentication);
         return ResponseEntity.ok(atsService.getLatestReport(userId));
     }
     

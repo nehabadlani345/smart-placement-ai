@@ -8,8 +8,10 @@ import com.smartplacementai.model.aggregation.ResumeQualityScoreResult;
 import com.smartplacementai.model.mongo.AtsReportDocument;
 import com.smartplacementai.model.mongo.ResumeDocument;
 import com.smartplacementai.model.mongo.StructuredResumeDocument;
+import com.smartplacementai.repository.mongo.AiExecutionLogRepository;
 import com.smartplacementai.repository.mongo.AtsReportRepository;
 import com.smartplacementai.repository.mongo.ResumeRepository;
+import com.smartplacementai.model.mongo.AiExecutionLogDocument;
 import com.smartplacementai.service.aggregation.ResumeQualityScoreService;
 import org.springframework.stereotype.Service;
 
@@ -26,19 +28,22 @@ public class AtsService {
     private final ResumeQualityScoreService resumeQualityScoreService;
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
+    private final AiExecutionLogRepository aiExecutionLogRepository;
     private static final Logger log = LoggerFactory.getLogger(AtsService.class);
    
     public AtsService(ResumeRepository resumeRepository,
                        ResumeParserService resumeParserService,
                        ResumeQualityScoreService resumeQualityScoreService,
                        AiClient aiClient,
-                       ObjectMapper objectMapper, AtsReportRepository atsReportRepository) {
+                       ObjectMapper objectMapper, AtsReportRepository atsReportRepository,
+                       AiExecutionLogRepository aiExecutionLogRepository) {
         this.atsReportRepository = atsReportRepository;
 		this.resumeRepository = resumeRepository;
         this.resumeParserService = resumeParserService;
         this.resumeQualityScoreService = resumeQualityScoreService;
         this.aiClient = aiClient;
         this.objectMapper = objectMapper;
+        this.aiExecutionLogRepository = aiExecutionLogRepository;
     }
 
     public AtsReportDto analyzeActiveResume(Long userId) {
@@ -57,7 +62,7 @@ public class AtsService {
         report.setSkillClarityScore(deterministic.getSkillClarityScore());
         report.setExperiencePresentationScore(deterministic.getExperiencePresentationScore());
 
-        enrichWithAi(report, structured);
+        enrichWithAi(report, structured, userId);
         // at the end of analyzeActiveResume(), right before "return report;":
         AtsReportDocument snapshot = new AtsReportDocument();
         snapshot.setUserId(userId);
@@ -95,7 +100,7 @@ public class AtsService {
     }
     
     
-    private void enrichWithAi(AtsReportDto report, StructuredResumeDocument structured) {
+    private void enrichWithAi(AtsReportDto report, StructuredResumeDocument structured, Long userId) {
         String systemPrompt = "You are an expert technical resume reviewer for software engineering placements. " +
                 "Given structured resume sections and deterministic ATS sub-scores (0-100 each), return JSON with " +
                 "exactly these keys: \"strengths\" (array, up to 4 short strings), \"improvements\" (array, up to 4 " +
@@ -109,15 +114,20 @@ public class AtsService {
                 ", skillClarity=" + report.getSkillClarityScore() +
                 ", experiencePresentation=" + report.getExperiencePresentationScore();
 
+        long start = System.currentTimeMillis();
         try {
             String rawJson = aiClient.generateJson(systemPrompt, userPrompt);
             JsonNode node = objectMapper.readTree(rawJson);
             report.setAiStrengths(toStringList(node.get("strengths")));
             report.setAiImprovements(toStringList(node.get("improvements")));
             report.setAiSummary(node.has("summary") ? node.get("summary").asText() : "");
+            aiExecutionLogRepository.save(new AiExecutionLogDocument(
+                    "ats", userId, System.currentTimeMillis() - start, true, null));
         } catch (Exception e) {
             // AI is a best-effort layer on top of the deterministic score — never let it break the report.
         	log.error("Gemini call failed: {}", e.getMessage(), e);
+            aiExecutionLogRepository.save(new AiExecutionLogDocument(
+                    "ats", userId, System.currentTimeMillis() - start, false, e.getMessage()));
         	report.setAiStrengths(List.of());
             report.setAiImprovements(List.of());
             report.setAiSummary("AI suggestions are temporarily unavailable. The scores above are still accurate.");

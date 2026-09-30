@@ -2,7 +2,7 @@
 .env
 .env.local
 *.env
-
+storage/
 # OS files
 .DS_Store
 Thumbs.db

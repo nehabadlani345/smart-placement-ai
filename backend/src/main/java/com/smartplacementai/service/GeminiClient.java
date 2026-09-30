@@ -1,16 +1,22 @@
 package com.smartplacementai.service;
 
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import jakarta.annotation.PostConstruct;
+
+import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+
+
 @Service
 public class GeminiClient implements AiClient {
-
-    private final RestClient restClient = RestClient.create("https://generativelanguage.googleapis.com");
 
     @Value("${app.gemini.api-key}")
     private String apiKey;
@@ -18,9 +24,35 @@ public class GeminiClient implements AiClient {
     @Value("${app.gemini.model:gemini-3.6-flash}")
     private String model;
 
+    @Value("${app.gemini.connect-timeout-seconds:10}")
+    private int connectTimeoutSeconds;
+
+    @Value("${app.gemini.read-timeout-seconds:60}")
+    private int readTimeoutSeconds;
+
+    private RestClient restClient;
+
+    @PostConstruct
+    private void init() {
+
+        SimpleClientHttpRequestFactory factory =
+                new SimpleClientHttpRequestFactory();
+
+        factory.setConnectTimeout(
+                Duration.ofSeconds(connectTimeoutSeconds)
+        );
+
+        factory.setReadTimeout(
+                Duration.ofSeconds(readTimeoutSeconds)
+        );
+
+        this.restClient = RestClient.builder()
+                .requestFactory(factory)
+                .build();}
+
     @Override
     public String generateJson(String systemPrompt, String userPrompt) {
-        String url = "/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+        String url = "/v1beta/models/" + model + ":generateContent";
 
         Map<String, Object> body = Map.of(
                 "systemInstruction", Map.of("parts", List.of(Map.of(
@@ -36,6 +68,7 @@ public class GeminiClient implements AiClient {
             try {
                 Map<String, Object> response = restClient.post()
                         .uri(url)
+                        .header("x-goog-api-key", apiKey)
                         .body(body)
                         .retrieve()
                         .body(Map.class);
@@ -46,26 +79,32 @@ public class GeminiClient implements AiClient {
                 if (attempt == maxAttempts) {
                     throw e; // give up after the last attempt — let the caller's existing catch block handle it
                 }
-                try {
-                    Thread.sleep(backoffMs);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
+                sleepOrRethrow(backoffMs, e);
+                backoffMs *= 2; // 1s, then 2s
+
+            } catch (org.springframework.web.client.ResourceAccessException e) {
+                // Covers connect/read timeouts (wraps SocketTimeoutException) — just as retriable as a 503.
+                boolean isTimeout = e.getCause() instanceof SocketTimeoutException;
+                if (!isTimeout || attempt == maxAttempts) {
                     throw e;
                 }
-                backoffMs *= 2; // 1s, then 2s, then would've been 4s
+                sleepOrRethrow(backoffMs, e);
+                backoffMs *= 2;
             }
         }
 
         throw new IllegalStateException("Unreachable"); // loop always returns or throws above
     }
-//    @SuppressWarnings("unchecked")
-//    private String extractText(Map<String, Object> response) {
-//        List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
-//        Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-//        List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-//        return (String) parts.get(0).get("text");
-//    }
-    
+
+    private void sleepOrRethrow(long backoffMs, RuntimeException original) {
+        try {
+            Thread.sleep(backoffMs);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw original;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private String extractText(Map<String, Object> response) {
         if (response == null) {
